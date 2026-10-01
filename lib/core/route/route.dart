@@ -1,10 +1,24 @@
 import 'package:go_router/go_router.dart';
 
+import '../../screens/admin/admin_dashboard_screen.dart';
+import '../../screens/login_screen.dart';
+import '../../screens/admin/admin_login_screen.dart';
 import '../../screens/home_screen.dart';
 
 class AppRoute {
   static final GoRouter routes = GoRouter(
-    initialLocation: '/home',
-    routes: [GoRoute(path: '/home', builder: (context, state) => HomeScreen())],
+    initialLocation: '/login',
+    routes: [
+      GoRoute(path: '/login', builder: (context, state) => LoginScreen()),
+      GoRoute(
+        path: '/admin/login',
+        builder: (context, state) => AdminLoginScreen(),
+      ),
+      GoRoute(
+        path: '/admin/dashboard',
+        builder: (context, state) => AdminDashboardScreen(),
+      ),
+      GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
+    ],
   );
 }
