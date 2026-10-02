@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/utils/validations.dart';
-import '../../features/auth_service.dart';
+import '../../services/auth_service.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -20,11 +20,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   bool isVisible = false;
   bool isLoggingIn = false;
 
-  void _login({required BuildContext context}) async {
+  Future<void> _login({required BuildContext context}) async {
     if (_formKey.currentState!.validate()) {
       setState(() => isLoggingIn = true);
 
-      final user = await AuthService.login(
+      final result = await AuthService.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
         'ADMIN',
@@ -32,13 +32,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
       if (!context.mounted) return;
 
-      if (user != null) {
+      if (result?['user'] != null) {
+        final message = result?['message'];
         setState(() => isLoggingIn = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
         context.go('/admin/dashboard');
       } else {
+        final message = result?['message'];
         setState(() => isLoggingIn = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('E-posta veya şifre hatalı!')),
+          SnackBar(content: Text(message ?? 'E-posta veya şifre hatalı!')),
         );
       }
     }
