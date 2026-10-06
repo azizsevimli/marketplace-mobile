@@ -4,14 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../core/utils/validations.dart';
 import '../../services/auth_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class VendorLoginScreen extends StatefulWidget {
+  const VendorLoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<VendorLoginScreen> createState() => _VendorLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _VendorLoginScreenState extends State<VendorLoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final result = await AuthService.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
-        'CUSTOMER',
+        'VENDOR',
       );
 
       if (!context.mounted) return;
@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(message)));
 
-        context.go('/home');
+        context.go('/vendor/dashboard');
       } else {
         final message = result?['message'];
 
@@ -72,33 +72,21 @@ class _LoginScreenState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Hesabınız yok mu?"),
+                Text("Satıcı hesabınız yok mu?"),
                 TextButton(
                   onPressed: () {
-                    context.go('/register');
+                    context.go('/vendor/register');
                   },
                   child: const Text("Kayıt Olun"),
                 ),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    context.go('/vendor/login');
-                  },
-                  icon: Icon(Icons.store_mall_directory_outlined, size: 24),
-                  label: Text("Vendor Giriş"),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    context.go('/admin/login');
-                  },
-                  icon: Icon(Icons.admin_panel_settings_outlined, size: 24),
-                  label: Text("Admin Giriş"),
-                ),
-              ],
+            ElevatedButton.icon(
+              onPressed: () {
+                context.go('/login');
+              },
+              icon: Icon(Icons.person_outline, size: 24),
+              label: Text("Müşteri Girişi"),
             ),
           ],
         ),
