@@ -28,15 +28,20 @@ class AuthService {
       );
 
       if (response.data['success'] != true) {
-        return {'user': null, 'message': response.data['message']};
+        return {
+          'userId': null,
+          'userRole': null,
+          'message': response.data['message'],
+        };
       }
 
       final message = response.data['message'];
       final userId = response.data['userId'];
+      final userRole = response.data['userRole'];
       final token = response.data['token'];
       await StorageService.saveToken(token);
 
-      return {'userId': userId, 'message': message};
+      return {'userId': userId, 'userRole': userRole, 'message': message};
     } on DioException catch (e) {
       debugPrint('Message: ${e.message}');
       debugPrint('Error: ${e.error}');
@@ -44,7 +49,8 @@ class AuthService {
       debugPrint('Kayıt Hatası [Body]: ${e.response?.data}');
 
       return {
-        'user': null,
+        'userId': null,
+        'userRole': null,
         'message': e.response?.data['message'] ?? 'Kayıt başarısız oldu.',
       };
     }
@@ -67,12 +73,12 @@ class AuthService {
 
       final user = UserModel.fromJson(response.data['user']);
 
-      if (role != user.role) {
-        return {
-          'user': null,
-          'message': 'Lütfen ${user.role} panelinden giriş yapın.',
-        };
-      }
+      // if (role != user.role) {
+      //   return {
+      //     'user': null,
+      //     'message': 'Lütfen ${user.role} panelinden giriş yapın.',
+      //   };
+      // }
 
       final token = response.data['token'];
       await StorageService.saveToken(token);

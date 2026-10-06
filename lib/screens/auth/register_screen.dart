@@ -18,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  String selectedRole = 'CUSTOMER';
   bool isLoading = false;
   bool isVisible = false;
 
@@ -30,12 +31,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _surnameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text.trim(),
-        'CUSTOMER',
+        selectedRole,
       );
 
       if (!context.mounted) return;
 
-      if (result?['userId'] != null) {
+      if (result?['userId'] != null && result?['userRole'] != null) {
         final message = result?['message'];
 
         setState(() => isLoading = false);
@@ -43,14 +44,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(message)));
 
-        context.go('/home');
+        if (result?['userRole'] == 'VENDOR') {
+          context.go('/vendor/dashboard');
+        } else {
+          context.go('/home');
+        }
       } else {
         final message = result?['message'];
 
         setState(() => isLoading = false);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message ?? 'E-posta veya şifre hatalı!')),
+          SnackBar(content: Text(message ?? 'Kayıt işlemi başarısız!')),
         );
       }
     }
@@ -69,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 20,
@@ -100,6 +105,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         spacing: 20,
         children: [
+          DropdownMenu<String>(
+            initialSelection: selectedRole,
+            dropdownMenuEntries: [
+              DropdownMenuEntry(value: 'CUSTOMER', label: 'Customer'),
+              DropdownMenuEntry(value: 'VENDOR', label: 'Vendor'),
+            ],
+            onSelected: (value) => setState(() => selectedRole = value!),
+          ),
           Row(
             spacing: 20,
             children: [

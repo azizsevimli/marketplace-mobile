@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  String selectedRole = 'CUSTOMER';
   bool isVisible = false;
   bool isLoggingIn = false;
 
@@ -26,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final result = await AuthService.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
-        'CUSTOMER',
+        selectedRole,
       );
 
       if (!context.mounted) return;
@@ -39,14 +40,20 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(message)));
 
-        context.go('/home');
+        if (result?['user'].role == 'ADMIN') {
+          context.go('/admin/dashboard');
+        } else if (result?['user'].role == 'VENDOR') {
+          context.go('/vendor/dashboard');
+        } else {
+          context.go('/home');
+        }
       } else {
         final message = result?['message'];
 
         setState(() => isLoggingIn = false);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message ?? 'E-posta veya şifre hatalı!')),
+          SnackBar(content: Text(message ?? 'Giriş işlemi başarısız!')),
         );
       }
     }
@@ -81,25 +88,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    context.go('/vendor/login');
-                  },
-                  icon: Icon(Icons.store_mall_directory_outlined, size: 24),
-                  label: Text("Vendor Giriş"),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    context.go('/admin/login');
-                  },
-                  icon: Icon(Icons.admin_panel_settings_outlined, size: 24),
-                  label: Text("Admin Giriş"),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -113,6 +101,15 @@ class _LoginScreenState extends State<LoginScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         spacing: 20,
         children: [
+          DropdownMenu<String>(
+            initialSelection: selectedRole,
+            dropdownMenuEntries: [
+              DropdownMenuEntry(value: 'CUSTOMER', label: 'Customer'),
+              DropdownMenuEntry(value: 'VENDOR', label: 'Vendor'),
+              DropdownMenuEntry(value: 'ADMIN', label: 'Admin'),
+            ],
+            onSelected: (value) => setState(() => selectedRole = value!),
+          ),
           TextFormField(
             controller: _emailController,
             validator: (value) => Validations.validateEmail(value),
