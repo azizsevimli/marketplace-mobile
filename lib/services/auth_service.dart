@@ -91,7 +91,7 @@ class AuthService {
     }
   }
 
-  static Future<UserModel?> checkUser(String role) async {
+  static Future<UserModel?> checkUser() async {
     final token = await StorageService.getToken();
     if (token != null && token.isNotEmpty) {
       try {
@@ -101,32 +101,35 @@ class AuthService {
         );
 
         if (response.data['success'] != true) {
+          await StorageService.deleteToken();
           return null;
         }
 
         final user = UserModel.fromJson(response.data['user']);
 
-        if (role != user.role) {
-          debugPrint(
-            'Kullanıcı rolü eşleşmiyor. '
-            'Beklenen: $role, Alınan: ${user.role}',
-          );
-          return null;
-        }
-
         return user;
       } on DioException catch (e) {
-        debugPrint('Type: ${e.type}');
         debugPrint('Message: ${e.message}');
         debugPrint('Error: ${e.error}');
-        debugPrint('Giriş Hatası [Status]: ${e.response?.statusCode}');
-        debugPrint('Giriş Hatası [Body]: ${e.response?.data}');
+        debugPrint('Hata [Status]: ${e.response?.statusCode}');
+        debugPrint('Hata [Body]: ${e.response?.data}');
+        await StorageService.deleteToken();
         return null;
       }
     } else {
       await StorageService.deleteToken();
       debugPrint('Token bulunmuyor.');
       return null;
+    }
+  }
+
+  static Future<bool> logout() async {
+    try {
+      await StorageService.deleteToken();
+      return true;
+    } catch (e) {
+      debugPrint('Logout Hatası: $e');
+      return false;
     }
   }
 }

@@ -48,23 +48,23 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     }
   }
 
-  Future<void> _checkUser({required BuildContext context}) async {
-    setState(() => isLoading = true);
-    final user = await AuthService.checkUser('ADMIN');
+  // Future<void> _checkUser({required BuildContext context}) async {
+  //   setState(() => isLoading = true);
+  //   final user = await AuthService.checkUser('ADMIN');
 
-    if (!context.mounted) return;
+  //   if (!context.mounted) return;
 
-    if (user != null) {
-      setState(() => isLoading = false);
-      context.go('/admin/dashboard');
-    }
-    setState(() => isLoading = false);
-  }
+  //   if (user != null) {
+  //     setState(() => isLoading = false);
+  //     context.go('/admin/dashboard');
+  //   }
+  //   setState(() => isLoading = false);
+  // }
 
   @override
   void initState() {
     super.initState();
-    _checkUser(context: context);
+    //_checkUser(context: context);
   }
 
   @override
