@@ -4,6 +4,7 @@ import '../../screens/splash_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/register_screen.dart';
 import '../../screens/admin/admin_dashboard_screen.dart';
+import '../../screens/admin/admin_users_screen.dart';
 import '../../screens/vendor/vendor_dashboard_screen.dart';
 import '../../screens/home_screen.dart';
 
@@ -21,6 +22,10 @@ class AppRoute {
       GoRoute(
         path: '/admin/dashboard',
         builder: (context, state) => AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/admin/users',
+        builder: (context, state) => AdminUsersScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
     ],

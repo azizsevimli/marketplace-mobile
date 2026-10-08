@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/admin_stats_model.dart';
 import '../../services/admin_service.dart';
@@ -102,7 +103,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ],
               icon: const Icon(Icons.person_outline),
               buttonTitle: 'Kullanıcılar',
-              onPressed: () {}, // İlgili sayfayı oluşturunca ekleyeceğim
+              onPressed: () {
+                context.push('/admin/users');
+              }, // İlgili sayfayı oluşturunca ekleyeceğim
             ),
             _buildCard(
               title: 'Ürün',
