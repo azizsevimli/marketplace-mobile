@@ -23,14 +23,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
     final data = await AdminService.getDashboardStats();
 
-    if (data?['stats'] != null) {
+    if (data['stats'] != null) {
       setState(() {
-        _stats = data?['stats'];
+        _stats = data['stats'];
         _isLoading = false;
       });
     } else {
       setState(() {
-        _errorMessage = data?['message'];
+        _errorMessage = data['message'];
         _isLoading = false;
       });
     }

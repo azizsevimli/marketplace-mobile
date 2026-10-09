@@ -9,7 +9,46 @@ import '../models/admin_stats_model.dart';
 class AdminService() {
   static final _dio = DioClient.dio;
 
-  static Future<Map<String, dynamic>?> getDashboardStats() async {
+  static Future<Map<String, dynamic>> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    try {
+      final token = await StorageService.getToken();
+      final response = await _dio.post(
+        '/admin/users/admins/new',
+        data: {
+          'firstName': firstName,
+          'lastName': lastName,
+          'email': email,
+          'phone': phone,
+          'password': password,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      final String message = response.data['message'];
+
+      if (response.data['success'] != true) {
+        return {'userId': null, 'message': message};
+      }
+
+      final String userId = response.data['userId'];
+
+      return {'userId': userId, 'message': message};
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return {'userId': null, 'message': e.message};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getDashboardStats() async {
     try {
       final token = await StorageService.getToken();
       if (token != null && token.isNotEmpty) {

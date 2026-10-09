@@ -133,9 +133,7 @@ class _AdminAdminsScreenState extends State<AdminAdminsScreen> {
 
   Widget _buildFloatingActionButton() {
     return FloatingActionButton.extended(
-      onPressed: () => debugPrint(
-        'Yeni admin ekleme sayfası',
-      ), // Sayfa oluşturulunca yönlendirme eklenecek
+      onPressed: () => context.push('/admin/users/admins/new'),
       icon: const Icon(Icons.add),
       label: const Text('Yeni Admin'),
     );
