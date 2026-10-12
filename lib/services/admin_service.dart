@@ -5,6 +5,7 @@ import '../core/network/dio_client.dart';
 import '../core/storage/secure_storage.dart';
 import '../models/admin_model.dart';
 import '../models/admin_stats_model.dart';
+import '../models/user_model.dart';
 
 class AdminService() {
   static final _dio = DioClient.dio;
@@ -111,6 +112,42 @@ class AdminService() {
       debugPrint('Hata [Status]: ${e.response?.statusCode}');
       debugPrint('Hata [Body]: ${e.response?.data}');
       return {'message': e.message, 'admins': null};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getCustomers() async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.get(
+          '/admin/users/customers',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          return {'message': response.data['message'], 'customers': null};
+        }
+
+        final List responseList = response.data['customers'];
+
+        final List<UserModel> list = responseList
+            .map((i) => UserModel.fromJson(Map<String, dynamic>.from(i)))
+            .toList();
+
+        return {'message': response.data['message'], 'customers': list};
+      } else {
+        await StorageService.deleteToken();
+        return {
+          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
+          'customers': null,
+        };
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return {'message': e.message, 'customers': null};
     }
   }
 }
