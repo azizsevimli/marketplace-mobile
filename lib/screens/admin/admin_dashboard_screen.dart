@@ -16,6 +16,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String? _errorMessage;
   bool _isLoading = false;
 
+  final List<({String title, String route})> _menuList = [
+    (title: 'Kullanıcılar', route: '/admin/users'),
+  ];
+
   Future<void> _getStats() async {
     setState(() {
       _isLoading = true;
@@ -46,7 +50,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Marketplace Admin'), centerTitle: true),
+      drawer: _buildDrawer(),
       body: _buildBody(),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Column(
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: Colors.blue.shade300),
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                'Marketplace',
+                style: Theme.of(context).textTheme.headlineMedium!
+                    .copyWith(color: Colors.white),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _menuList.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text(_menuList[index].title),
+                  onTap: () => context.push(_menuList[index].route),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
