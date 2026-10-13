@@ -4,6 +4,7 @@ import '../../screens/admin/admin_admins_screen.dart';
 import '../../screens/admin/admin_customers_screen.dart';
 import '../../screens/admin/admin_vendors_screen.dart';
 import '../../screens/admin/new_admin_screen.dart';
+import '../../screens/admin/vendor_detail_screen.dart';
 import '../../screens/splash_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/register_screen.dart';
@@ -42,6 +43,13 @@ class AppRoute {
       GoRoute(
         path: '/admin/users/vendors',
         builder: (context, state) => AdminVendorsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/users/vendors/:id',
+        builder: (context, state) {
+          final String id = state.pathParameters['id']!;
+          return VendorDetailScreen(id: id);
+        },
       ),
       GoRoute(
         path: '/admin/users/admins/new',

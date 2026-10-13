@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/vendor_model.dart';
 import '../../services/admin_service.dart';
@@ -98,8 +99,8 @@ class _AdminVendorsScreenState extends State<AdminVendorsScreen> {
           subtitle: Text(vendor.email),
           trailing: Icon(Icons.arrow_forward_ios),
           onTap: () {
-            debugPrint(
-              'Kullanıcı detayı ${vendor.id}',
+            context.push(
+              '/admin/users/vendors/${vendor.id}',
             ); // Satıcı onaylama ekranına yönlendirilecek
           },
         );

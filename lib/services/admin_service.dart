@@ -176,7 +176,7 @@ class AdminService() {
         await StorageService.deleteToken();
         return {
           'message': 'Yetkisiz Erişim (Token bulunmuyor)',
-          'customers': null,
+          'vendors': null,
         };
       }
     } on DioException catch (e) {
@@ -185,6 +185,72 @@ class AdminService() {
       debugPrint('Hata [Status]: ${e.response?.statusCode}');
       debugPrint('Hata [Body]: ${e.response?.data}');
       return {'message': e.message, 'vendors': null};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getVendorById(String id) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.get(
+          '/admin/users/vendors/$id',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          return {'message': response.data['message'], 'vendor': null};
+        }
+
+        final VendorModel vendor = VendorModel.fromJson(
+          response.data['vendor'],
+        );
+
+        return {'message': response.data['message'], 'vendor': vendor};
+      } else {
+        await StorageService.deleteToken();
+        return {
+          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
+          'vendor': null,
+        };
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return {'message': e.message, 'vendor': null};
+    }
+  }
+
+  static Future<String> updateVendorStatus(
+    String id,
+    String status,
+    String? rejectedMessage,
+  ) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.post(
+          '/admin/users/vendors/$id',
+          data: {'status': status, 'rejectedMessage': rejectedMessage},
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          return response.data['message'];
+        }
+
+        return response.data['message'];
+      } else {
+        await StorageService.deleteToken();
+        return 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return e.message.toString();
     }
   }
 }
