@@ -19,6 +19,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final List<({String title, String route})> _menuList = [
     (title: 'Kullanıcılar', route: '/admin/users'),
     (title: 'Kategoriler', route: '/admin/categories'),
+    (title: 'Mağazalar', route: '/admin/stores'),
   ];
 
   Future<void> _getStats() async {

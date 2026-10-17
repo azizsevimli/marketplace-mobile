@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../screens/admin/admin_admins_screen.dart';
 import '../../screens/admin/admin_categories_screen.dart';
 import '../../screens/admin/admin_customers_screen.dart';
+import '../../screens/admin/admin_stores_screen.dart';
 import '../../screens/admin/admin_vendors_screen.dart';
 import '../../screens/admin/new_admin_screen.dart';
 import '../../screens/admin/vendor_detail_screen.dart';
@@ -59,6 +60,10 @@ class AppRoute {
       GoRoute(
         path: '/admin/categories',
         builder: (context, state) => AdminCategoriesScreen(),
+      ),
+      GoRoute(
+        path: '/admin/stores',
+        builder: (context, state) => AdminStoresScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
     ],

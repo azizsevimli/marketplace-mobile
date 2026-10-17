@@ -7,6 +7,7 @@ import '../core/storage/secure_storage.dart';
 import '../models/admin_model.dart';
 import '../models/admin_stats_model.dart';
 import '../models/category_model.dart';
+import '../models/store_model.dart';
 import '../models/user_model.dart';
 import '../models/vendor_model.dart';
 
@@ -475,6 +476,41 @@ class AdminService() {
       debugPrint('Hata [Status]: ${e.response?.statusCode}');
       debugPrint('Hata [Body]: ${e.response?.data}');
       return e.message.toString();
+    }
+  }
+
+  static Future<Map<String, dynamic>> getStores() async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.get(
+          '/admin/stores',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          throw response.data['message'];
+          // return response.data['message'];
+        }
+
+        final List<dynamic> responseList =
+            response.data['result'] as List<dynamic>;
+
+        final List<StoreModel> stores = responseList
+            .map((store) => StoreModel.fromJson(store as Map<String, dynamic>))
+            .toList();
+
+        return {'message': response.data['message'], 'stores': stores};
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return {'message': e.message.toString(), 'stores': null};
     }
   }
 }
