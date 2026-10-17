@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../core/network/dio_client.dart';
 import '../core/storage/secure_storage.dart';
 import '../models/admin_model.dart';
 import '../models/admin_stats_model.dart';
+import '../models/category_model.dart';
 import '../models/user_model.dart';
 import '../models/vendor_model.dart';
 
@@ -244,6 +246,228 @@ class AdminService() {
       } else {
         await StorageService.deleteToken();
         return 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return e.message.toString();
+    }
+  }
+
+  static Future<Map<String, dynamic>> getCategoriesWithSub() async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.get(
+          '/admin/categories',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          return {'message': response.data['message'], 'categories': null};
+        }
+
+        final List<dynamic> responseList =
+            response.data['categories'] as List<dynamic>;
+
+        final List<CategoryModel> categories = responseList
+            .map((i) => CategoryModel.fromJson(i as Map<String, dynamic>))
+            .toList();
+
+        return {'message': response.data['message'], 'categories': categories};
+      } else {
+        await StorageService.deleteToken();
+        return {
+          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
+          'categories': null,
+        };
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return {'message': e.message, 'categories': null};
+    }
+  }
+
+  static Future<String> createCategory(String title, String slug) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.post(
+          '/category',
+          data: {'title': title, 'slug': slug},
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          throw response.data['message'];
+          // return response.data['message'];
+        }
+
+        return response.data['message'];
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return e.message.toString();
+    }
+  }
+
+  static Future<String> updateCategory(
+    String id,
+    String title,
+    String slug,
+  ) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.patch(
+          '/category/$id',
+          data: {'title': title, 'slug': slug},
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          throw response.data['message'];
+          // return response.data['message'];
+        }
+
+        return response.data['message'];
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return e.message.toString();
+    }
+  }
+
+  static Future<String> deleteCategory(String id) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.delete(
+          '/category/$id',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          throw response.data['message'];
+          // return response.data['message'];
+        }
+
+        return response.data['message'];
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return e.message.toString();
+    }
+  }
+
+  static Future<String> createSubcategory(
+    String parentId,
+    String title,
+    String slug,
+  ) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.post(
+          '/subcategory',
+          data: {'parentId': parentId, 'title': title, 'slug': slug},
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          throw response.data['message'];
+          // return response.data['message'];
+        }
+
+        return response.data['message'];
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return e.message.toString();
+    }
+  }
+
+  static Future<String> updateSubcategory(
+    String id,
+    String parentId,
+    String title,
+    String slug,
+  ) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.patch(
+          '/subcategory/$id',
+          data: {'parentId': parentId, 'title': title, 'slug': slug},
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          throw response.data['message'];
+          // return response.data['message'];
+        }
+
+        return response.data['message'];
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return e.message.toString();
+    }
+  }
+
+  static Future<String> deleteSubcategory(String id) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.delete(
+          '/subcategory/$id',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['success'] != true) {
+          throw response.data['message'];
+          // return response.data['message'];
+        }
+
+        return response.data['message'];
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
       }
     } on DioException catch (e) {
       debugPrint('Message: ${e.message}');

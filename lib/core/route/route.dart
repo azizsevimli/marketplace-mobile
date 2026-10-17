@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../../screens/admin/admin_admins_screen.dart';
+import '../../screens/admin/admin_categories_screen.dart';
 import '../../screens/admin/admin_customers_screen.dart';
 import '../../screens/admin/admin_vendors_screen.dart';
 import '../../screens/admin/new_admin_screen.dart';
@@ -54,6 +55,10 @@ class AppRoute {
       GoRoute(
         path: '/admin/users/admins/new',
         builder: (context, state) => NewAdminScreen(),
+      ),
+      GoRoute(
+        path: '/admin/categories',
+        builder: (context, state) => AdminCategoriesScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
     ],
