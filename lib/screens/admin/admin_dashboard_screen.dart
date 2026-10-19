@@ -20,6 +20,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     (title: 'Kullanıcılar', route: '/admin/users'),
     (title: 'Kategoriler', route: '/admin/categories'),
     (title: 'Mağazalar', route: '/admin/stores'),
+    (title: 'Siparişler', route: '/admin/orders'),
   ];
 
   Future<void> _getStats() async {
@@ -169,7 +170,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ],
               icon: const Icon(Icons.receipt_long_outlined),
               buttonTitle: 'Siparişler',
-              onPressed: () {}, // İlgili sayfayı oluşturunca ekleyeceğim
+              onPressed: () => context.push('/admin/orders'),
             ),
           ],
         ),
