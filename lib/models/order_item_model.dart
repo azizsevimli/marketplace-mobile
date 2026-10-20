@@ -3,6 +3,7 @@ class OrderItemModel {
   final String orderId;
   final String storeId;
   final String productId;
+  final String productTitle;
   final int quantity;
   final double unitPrice;
   final double totalPrice;
@@ -15,6 +16,7 @@ class OrderItemModel {
     required this.orderId,
     required this.storeId,
     required this.productId,
+    required this.productTitle,
     required this.quantity,
     required this.unitPrice,
     required this.totalPrice,
@@ -29,6 +31,7 @@ class OrderItemModel {
       orderId: json['order_id'],
       storeId: json['store_id'],
       productId: json['product_id'],
+      productTitle: json['product_title'],
       quantity: json['quantity'],
       unitPrice: double.parse(json['unit_price']),
       totalPrice: double.parse(json['total_price']),
@@ -44,6 +47,7 @@ class OrderItemModel {
       'orderId': orderId,
       'storeId': storeId,
       'productId': productId,
+      'productTitle': productTitle,
       'quantity': quantity,
       'unitPrice': unitPrice,
       'totalPrice': totalPrice,

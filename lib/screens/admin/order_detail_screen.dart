@@ -196,11 +196,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 0.0,
                         ),
-                        leading: CircleAvatar(child: const Icon(Icons.photo)),
-                        title: const Text('Ürün Adı'), // veri tabanı sorgusunu düzenlenince canlı veri gelecek
+                        title: Text(item.productTitle),
                         subtitle: Text(
-                          'Adet: ${item.quantity}    Birim Ücret: ${item.unitPrice}',
+                          'Adet: ${item.quantity}    Birim Ücret: ${item.unitPrice} TL',
                         ),
+                        trailing: Text('${item.totalPrice} TL'),
                       ),
                   ],
                 ],
