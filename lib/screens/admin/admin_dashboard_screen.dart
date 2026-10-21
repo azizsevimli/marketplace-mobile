@@ -20,6 +20,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     (title: 'Kullanıcılar', route: '/admin/users'),
     (title: 'Kategoriler', route: '/admin/categories'),
     (title: 'Mağazalar', route: '/admin/stores'),
+    (title: 'Ürünler', route: '/admin/products'),
     (title: 'Siparişler', route: '/admin/orders'),
   ];
 
@@ -157,7 +158,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ],
               icon: const Icon(Icons.shopping_cart_outlined),
               buttonTitle: 'Ürünler',
-              onPressed: () {}, // İlgili sayfayı oluşturunca ekleyeceğim
+              onPressed: () => context.push('/admin/products'),
             ),
             _buildCard(
               title: 'Sipariş',

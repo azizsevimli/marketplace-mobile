@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
+import 'core/providers/admin_product_provider.dart';
 import 'core/providers/category_provider.dart';
 import 'core/route/route.dart';
 import 'core/theme/theme.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('tr_TR', null);
+
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => CategoryProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProductProvider()),
+      ],
       child: const MyApp(),
     ),
   );

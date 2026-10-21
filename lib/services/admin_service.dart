@@ -9,6 +9,7 @@ import '../models/admin_stats_model.dart';
 import '../models/category_model.dart';
 import '../models/order_item_model.dart';
 import '../models/order_model.dart';
+import '../models/product_model.dart';
 import '../models/store_model.dart';
 import '../models/user_model.dart';
 import '../models/vendor_model.dart';
@@ -583,6 +584,45 @@ class AdminService() {
       debugPrint('Hata [Status]: ${e.response?.statusCode}');
       debugPrint('Hata [Body]: ${e.response?.data}');
       return {'message': e.message.toString(), 'orderItems': null};
+    }
+  }
+
+  static Future<Map<String, dynamic>> getProductsByStatus(String status) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.get(
+          '/admin/products?status=$status',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        // if (response.data['success'] != true) {
+        //   throw response.data['message'];
+        //   // return response.data['message'];
+        // }
+
+        final List<dynamic> responseList =
+            response.data['result'] as List<dynamic>;
+
+        if (responseList.isNotEmpty) {
+          final List<ProductModel> products = responseList
+              .map((i) => ProductModel.fromJson(i as Map<String, dynamic>))
+              .toList();
+
+          return {'message': response.data['message'], 'products': products};
+        } else {
+          return {'message': 'Ürün bulunmuyor.', 'products': <ProductModel>[]};
+        }
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return {'message': e.response?.data['message'], 'products': null};
     }
   }
 }

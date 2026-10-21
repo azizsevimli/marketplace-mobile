@@ -1,9 +1,11 @@
 import 'package:go_router/go_router.dart';
+import 'package:marketplace_mobile/screens/admin/product_detail_screen.dart';
 
 import '../../screens/admin/admin_admins_screen.dart';
 import '../../screens/admin/admin_categories_screen.dart';
 import '../../screens/admin/admin_customers_screen.dart';
 import '../../screens/admin/admin_orders_screen.dart';
+import '../../screens/admin/admin_products_screen.dart';
 import '../../screens/admin/admin_stores_screen.dart';
 import '../../screens/admin/admin_vendors_screen.dart';
 import '../../screens/admin/new_admin_screen.dart';
@@ -76,6 +78,17 @@ class AppRoute {
         builder: (context, state) {
           final Map<String, dynamic> data = state.extra as Map<String, dynamic>;
           return OrderDetailScreen(order: data['order']);
+        },
+      ),
+      GoRoute(
+        path: '/admin/products',
+        builder: (context, state) => AdminProductsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/products/:id',
+        builder: (context, state) {
+          final String id = state.pathParameters['id']!;
+          return ProductDetailScreen(productId: id);
         },
       ),
       GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
