@@ -82,7 +82,7 @@ class AppRoute {
       ),
       GoRoute(
         path: '/admin/products',
-        builder: (context, state) => AdminProductsScreen(),
+        builder: (context, state) => const AdminProductsScreen(),
       ),
       GoRoute(
         path: '/admin/products/:id',

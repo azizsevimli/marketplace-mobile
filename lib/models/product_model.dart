@@ -1,3 +1,5 @@
+import 'product_status.dart';
+
 class ProductModel {
   final String id;
   final String storeId;
@@ -9,7 +11,7 @@ class ProductModel {
   final double discountPrice;
   final int stockQuantity;
   final String sku;
-  final String status;
+  final ProductStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<ProductImageModel> productImages;
@@ -43,10 +45,10 @@ class ProductModel {
       discountPrice: double.parse(json['discount_price']),
       stockQuantity: json['stock_quantity'],
       sku: json['sku'],
-      status: json['status'],
+      status: ProductStatus.fromApi(json['status']),
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
-      productImages: (json['product_images'] as List<dynamic>)
+      productImages: (json['product_images'] as List<dynamic>? ?? [])
           .map(
             (image) =>
                 ProductImageModel.fromJson(image as Map<String, dynamic>),
@@ -67,7 +69,7 @@ class ProductModel {
       "discount_price": discountPrice,
       "stock_quantity": stockQuantity,
       "sku": sku,
-      "status": status,
+      "status": status.value,
       "created_at": createdAt.toIso8601String(),
       "updated_at": updatedAt.toIso8601String(),
       'productImages': productImages.map((image) => image.toJson()).toList(),

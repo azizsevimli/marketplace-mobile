@@ -625,4 +625,70 @@ class AdminService() {
       return {'message': e.response?.data['message'], 'products': null};
     }
   }
+
+  static Future<Map<String, dynamic>> getProductDetail(String id) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.get(
+          '/admin/products/$id',
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['result'] != null) {
+          final ProductModel product = ProductModel.fromJson(
+            response.data['result'],
+          );
+
+          return {'message': response.data['message'], 'product': product};
+        } else {
+          return {'message': 'Ürün bulunmuyor.', 'product': null};
+        }
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return {'message': e.response?.data['message'], 'product': null};
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateProductStatus(
+    String id,
+    String status,
+  ) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token != null && token.isNotEmpty) {
+        final response = await _dio.patch(
+          '/admin/products/$id',
+          data: {'status': status},
+          options: Options(headers: {'Authorization': 'Bearer $token'}),
+        );
+
+        if (response.data['result'] != null) {
+          final ProductModel product = ProductModel.fromJson(
+            response.data['result'],
+          );
+
+          return {'message': response.data['message'], 'product': product};
+        } else {
+          return {'message': 'Ürün bulunmuyor.', 'product': null};
+        }
+      } else {
+        await StorageService.deleteToken();
+        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+      }
+    } on DioException catch (e) {
+      debugPrint('Message: ${e.message}');
+      debugPrint('Error: ${e.error}');
+      debugPrint('Hata [Status]: ${e.response?.statusCode}');
+      debugPrint('Hata [Body]: ${e.response?.data}');
+      return {'message': e.response?.data['message'], 'product': null};
+    }
+  }
 }

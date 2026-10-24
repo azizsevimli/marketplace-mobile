@@ -16,6 +16,12 @@ class AdminProductsScreen extends StatefulWidget {
 class _AdminProductsScreenState extends State<AdminProductsScreen> {
   ProductStatus selectedStatus = ProductStatus.pending;
 
+  Future<void> _openDetail(String id) async {
+    await context.push('/admin/products/$id');
+    if (!mounted) return;
+    context.read<AdminProductProvider>().fetchProducts(selectedStatus);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -88,9 +94,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
           title: Text(product.title),
           subtitle: Text('Kayıt Tarihi: $date'),
           trailing: const Icon(Icons.arrow_forward_ios),
-          onTap: () => context.push(
-            '/admin/products/${product.id}',
-          ), // Detay sayfasına yönlendirme yapılacak.
+          onTap: () => _openDetail(product.id),
         );
       },
     );
