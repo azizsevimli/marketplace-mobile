@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/admin_model.dart';
 import '../../services/admin_service.dart';
+import '../../widgets/admin/admin_appbars.dart';
+import '../../widgets/admin/error_screen.dart';
+import '../../widgets/admin/loading_screen.dart';
+import '../../widgets/admin/user_expansion_tile.dart';
 
 class AdminAdminsScreen extends StatefulWidget {
   const AdminAdminsScreen({super.key});
@@ -13,35 +18,36 @@ class AdminAdminsScreen extends StatefulWidget {
 
 class _AdminAdminsScreenState extends State<AdminAdminsScreen> {
   late List<AdminModel> _admins;
-  String? errorMessage;
-  bool isLoading = false;
+  String? _errorMessage;
+  bool _isLoading = false;
 
-  Future<void> getAdmins() async {
+  // TODO(001): Provider'a çevirilecek kaydetme ile beraber.
+  Future<void> _getAdmins() async {
     try {
       setState(() {
-        isLoading = true;
-        errorMessage = null;
+        _isLoading = true;
+        _errorMessage = null;
       });
 
       final data = await AdminService.getAdmins();
 
       if (data['admins'] == null) {
         setState(() {
-          errorMessage = data['message'];
-          isLoading = false;
+          _errorMessage = data['message'];
+          _isLoading = false;
         });
         return;
       }
 
       setState(() {
         _admins = data['admins'];
-        errorMessage = null;
-        isLoading = false;
+        _errorMessage = null;
+        _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        isLoading = false;
-        errorMessage = e.toString();
+        _isLoading = false;
+        _errorMessage = e.toString();
       });
     }
   }
@@ -49,89 +55,55 @@ class _AdminAdminsScreenState extends State<AdminAdminsScreen> {
   @override
   void initState() {
     super.initState();
-    getAdmins();
+    _getAdmins();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Adminler'),
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_ios_new),
-        ),
-      ),
+      appBar: adminScreensAppBar(context: context, title: 'Adminler'),
       body: _buildBody(),
       floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
   Widget _buildBody() {
-    if (isLoading == true) {
-      return const Center(child: CircularProgressIndicator());
+    if (_isLoading == true) {
+      return const LoadingScreen();
     }
 
-    if (errorMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(errorMessage!),
-            ElevatedButton(
-              onPressed: getAdmins,
-              child: const Text('Yeniden dene'),
-            ),
-          ],
-        ),
-      );
+    if (_errorMessage != null) {
+      return ErrorScreen(errorMessage: _errorMessage!, onPressed: _getAdmins);
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-      itemCount: _admins.length,
-      itemBuilder: (context, index) {
-        final admin = _admins[index];
-        return ExpansionTile(
-          childrenPadding: const EdgeInsets.all(8.0),
-          title: Text('${admin.firstName} ${admin.lastName}'),
-          subtitle: Text(admin.email),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('ID', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(admin.id),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Telefon',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(admin.phone != null ? admin.phone! : 'Kayıtlı değil'),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Oluşturulma Tarihi',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(admin.createdAt.toString()),
-              ],
-            ),
-          ],
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: _getAdmins,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+        itemCount: _admins.length,
+        itemBuilder: (context, index) {
+          final admin = _admins[index];
+
+          final createdAt = DateFormat(
+            'dd MMMM yyyy - HH.mm (UTC)',
+            'tr_TR',
+          ).format(admin.createdAt);
+
+          return UserExpansionTile(
+            title: '${admin.firstName} ${admin.lastName}',
+            subtitle: admin.email,
+            rowList: [
+              (rowTitle: 'ID', rowValue: admin.id),
+              (rowTitle: 'Telefon', rowValue: admin.phone ?? 'Kayıtlı değil'),
+              (rowTitle: 'Kayıt Tarihi', rowValue: createdAt),
+            ],
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildFloatingActionButton() {
+  FloatingActionButton _buildFloatingActionButton() {
     return FloatingActionButton.extended(
       onPressed: () => context.push('/admin/users/admins/new'),
       icon: const Icon(Icons.add),

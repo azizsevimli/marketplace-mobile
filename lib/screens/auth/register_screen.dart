@@ -83,12 +83,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Hesabınız var mı?"),
+                const Text("Hesabınız var mı?"),
                 TextButton(
                   onPressed: () {
                     context.go('/login');
                   },
-                  child: Text("Giriş Yap"),
+                  child: const Text("Giriş Yap"),
                 ),
               ],
             ),
@@ -107,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           DropdownMenu<String>(
             initialSelection: selectedRole,
-            dropdownMenuEntries: [
+            dropdownMenuEntries: const [
               DropdownMenuEntry(value: 'CUSTOMER', label: 'Customer'),
               DropdownMenuEntry(value: 'VENDOR', label: 'Vendor'),
             ],
@@ -150,8 +150,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               suffixIcon: IconButton(
                 onPressed: () => setState(() => isVisible = !isVisible),
                 icon: isVisible
-                    ? Icon(Icons.visibility)
-                    : Icon(Icons.visibility_off),
+                    ? const Icon(Icons.visibility)
+                    : const Icon(Icons.visibility_off),
               ),
             ),
           ),

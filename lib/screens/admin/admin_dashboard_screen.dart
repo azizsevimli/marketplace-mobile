@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../models/admin_stats_model.dart';
 import '../../services/admin_service.dart';
+import '../../widgets/admin/dashboard_card.dart';
+import '../../widgets/admin/error_screen.dart';
+import '../../widgets/admin/loading_screen.dart';
+import '../../widgets/admin/menu_drawer.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -15,14 +18,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   AdminStatsModel? _stats;
   String? _errorMessage;
   bool _isLoading = false;
-
-  final List<({String title, String route})> _menuList = [
-    (title: 'Kullanıcılar', route: '/admin/users'),
-    (title: 'Kategoriler', route: '/admin/categories'),
-    (title: 'Mağazalar', route: '/admin/stores'),
-    (title: 'Ürünler', route: '/admin/products'),
-    (title: 'Siparişler', route: '/admin/orders'),
-  ];
 
   Future<void> _getStats() async {
     setState(() {
@@ -54,60 +49,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Marketplace Admin'), centerTitle: true),
-      drawer: _buildDrawer(),
+      drawer: AdminMenuDrawer(),
       body: _buildBody(),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Column(
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue.shade300),
-            child: SizedBox(
-              width: double.infinity,
-              child: Text(
-                'Marketplace',
-                style: Theme.of(context).textTheme.headlineMedium!
-                    .copyWith(color: Colors.white),
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _menuList.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(_menuList[index].title),
-                  onTap: () => context.push(_menuList[index].route),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingScreen();
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Hata: $_errorMessage'),
-            ElevatedButton(
-              onPressed: _getStats,
-              child: const Text('Yeniden Dene'),
-            ),
-          ],
-        ),
-      );
+      return ErrorScreen(errorMessage: _errorMessage!, onPressed: _getStats);
     }
 
     if (_stats == null) {
@@ -115,7 +68,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Hata: Veri bulunamadı.'),
+            const Text('İstatistik bulunamadı.'),
             ElevatedButton(
               onPressed: _getStats,
               child: const Text('Yeniden Dene'),
@@ -133,105 +86,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: 16,
           children: [
-            _buildCard(
+            DashboardCard(
               title: 'Kullanıcı',
               titleValue: _stats!.users.total,
               subtitles: [
-                (title: 'Admin', value: _stats!.users.admin),
-                (title: 'Müşteri', value: _stats!.users.customer),
-                (title: 'Vendor', value: _stats!.users.vendor),
+                (subtitle: 'Admin', value: _stats!.users.admin),
+                (subtitle: 'Müşteri', value: _stats!.users.customer),
+                (subtitle: 'Vendor', value: _stats!.users.vendor),
               ],
-              icon: const Icon(Icons.person_outline),
+              icon: Icons.person_outline,
               buttonTitle: 'Kullanıcılar',
-              onPressed: () {
-                context.push('/admin/users');
-              }, // İlgili sayfayı oluşturunca ekleyeceğim
+              route: '/admin/users',
             ),
-            _buildCard(
+            DashboardCard(
               title: 'Ürün',
               titleValue: _stats!.products.total,
               subtitles: [
-                (title: 'Bekleyen', value: _stats!.products.pending),
-                (title: 'Aktif', value: _stats!.products.active),
-                (title: 'Pasif', value: _stats!.products.passive),
-                (title: 'Ret', value: _stats!.products.rejected),
+                (subtitle: 'Bekliyor', value: _stats!.products.pending),
+                (subtitle: 'Onaylandı', value: _stats!.products.active),
+                (subtitle: 'Reddedildi', value: _stats!.products.rejected),
+                (subtitle: 'Pasif', value: _stats!.products.passive),
               ],
-              icon: const Icon(Icons.shopping_cart_outlined),
+              icon: Icons.shopping_cart_outlined,
               buttonTitle: 'Ürünler',
-              onPressed: () => context.push('/admin/products'),
+              route: '/admin/products',
             ),
-            _buildCard(
+            DashboardCard(
               title: 'Sipariş',
               titleValue: _stats!.orders.total,
               subtitles: [
-                (title: 'Bekleyen', value: _stats!.orders.pending),
-                (title: 'Hazırlanıyor', value: _stats!.orders.preparing),
-                (title: 'Teslim edilen', value: _stats!.orders.completed),
-                (title: 'İptal', value: _stats!.orders.cancelled),
+                (subtitle: 'Bekliyor', value: _stats!.orders.pending),
+                (subtitle: 'Hazırlanıyor', value: _stats!.orders.preparing),
+                (subtitle: 'Teslim edildi', value: _stats!.orders.completed),
+                (subtitle: 'İptal', value: _stats!.orders.cancelled),
               ],
-              icon: const Icon(Icons.receipt_long_outlined),
+              icon: Icons.receipt_long_outlined,
               buttonTitle: 'Siparişler',
-              onPressed: () => context.push('/admin/orders'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCard({
-    required String title,
-    required String titleValue,
-    required List<({String title, String value})> subtitles,
-    required Widget icon,
-    required String buttonTitle,
-    required VoidCallback onPressed,
-  }) {
-    return Card(
-      child: ListTile(
-        leading: icon,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-            Text(
-              titleValue,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 8.0,
-          children: [
-            const Divider(),
-            for (final subtitle in subtitles)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    subtitle.title,
-                    style: const TextStyle(fontWeight: .bold),
-                  ),
-                  Text(subtitle.value),
-                ],
-              ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(onPressed: onPressed, child: Text(buttonTitle)),
-              ],
+              route: '/admin/orders',
             ),
           ],
         ),

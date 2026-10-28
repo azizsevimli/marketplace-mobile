@@ -1,3 +1,9 @@
+import 'dart:collection';
+
+import 'package:flutter/material.dart';
+
+typedef ProductStatusEntry = DropdownMenuEntry<ProductStatus>;
+
 enum ProductStatus {
   pending('PENDING', 'Bekliyor'),
   approved('APPROVED', 'Onaylandı'),
@@ -14,4 +20,12 @@ enum ProductStatus {
     }
     throw FormatException('Bilinmeyen ürün durumu: $apiValue');
   }
+
+  static final List<ProductStatusEntry> entries =
+      UnmodifiableListView<ProductStatusEntry>(
+        values.map<ProductStatusEntry>(
+          (ProductStatus status) =>
+              ProductStatusEntry(value: status, label: status.label),
+        ),
+      );
 }

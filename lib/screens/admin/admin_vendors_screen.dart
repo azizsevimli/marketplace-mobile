@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../models/vendor_model.dart';
+import '../../models/vendor_status.dart';
 import '../../services/admin_service.dart';
+import '../../widgets/admin/admin_appbars.dart';
+import '../../widgets/admin/error_screen.dart';
+import '../../widgets/admin/loading_screen.dart';
 
 class AdminVendorsScreen extends StatefulWidget {
   const AdminVendorsScreen({super.key});
@@ -16,6 +20,7 @@ class _AdminVendorsScreenState extends State<AdminVendorsScreen> {
   String? _errorMessage;
   bool _isLoading = false;
 
+  // TODO(001): Provider'a çevirilecek kaydetme ile beraber.
   Future<void> _getVendors() async {
     try {
       setState(() {
@@ -55,56 +60,50 @@ class _AdminVendorsScreenState extends State<AdminVendorsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Satıcılar')),
+      appBar: adminScreensAppBar(context: context, title: 'Satıcılar'),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading == true) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingScreen();
     }
 
     if (_errorMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            ElevatedButton(
-              onPressed: _getVendors,
-              child: const Text('Yeniden dene'),
-            ),
-          ],
-        ),
-      );
+      return ErrorScreen(errorMessage: _errorMessage!, onPressed: _getVendors);
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-      itemCount: _vendors.length,
-      itemBuilder: (context, index) {
-        VendorModel vendor = _vendors[index];
-        String status = vendor.status;
-        return ListTile(
-          leading: status == 'PENDING'
-              ? Icon(Icons.pending_outlined, color: Colors.amber)
-              : status == 'APPROVED'
-              ? Icon(Icons.check_box_outlined, color: Colors.green)
-              : status == 'REJECTED'
-              ? Icon(Icons.indeterminate_check_box_outlined, color: Colors.red)
-              : Icon(Icons.warning_amber_rounded, color: Colors.blue),
-          title: Text('${vendor.firstName} ${vendor.lastName}'),
-          subtitle: Text(vendor.email),
-          trailing: Icon(Icons.arrow_forward_ios),
-          onTap: () {
-            context.push(
-              '/admin/users/vendors/${vendor.id}',
-            ); // Satıcı onaylama ekranına yönlendirilecek
-          },
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: _getVendors,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+        itemCount: _vendors.length,
+        itemBuilder: (context, index) {
+          VendorModel vendor = _vendors[index];
+          return ListTile(
+            leading: _buildLeading(vendor.status),
+            title: Text('${vendor.firstName} ${vendor.lastName}'),
+            subtitle: Text(vendor.email),
+            trailing: const Icon(Icons.arrow_forward_ios),
+            onTap: () => context.push('/admin/users/vendors/${vendor.id}'),
+          );
+        },
+      ),
     );
+  }
+
+  Icon _buildLeading(VendorStatus status) {
+    switch (status) {
+      case VendorStatus.pending:
+        return const Icon(Icons.pending_outlined, color: Colors.amber);
+      case VendorStatus.approved:
+        return const Icon(Icons.check_box_outlined, color: Colors.green);
+      case VendorStatus.rejected:
+        return const Icon(
+          Icons.indeterminate_check_box_outlined,
+          color: Colors.red,
+        );
+    }
   }
 }

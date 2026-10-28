@@ -1,3 +1,5 @@
+import 'order_item_status.dart';
+
 class OrderItemModel {
   final String id;
   final String orderId;
@@ -7,7 +9,7 @@ class OrderItemModel {
   final int quantity;
   final double unitPrice;
   final double totalPrice;
-  final String status;
+  final OrderItemStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -35,7 +37,7 @@ class OrderItemModel {
       quantity: json['quantity'],
       unitPrice: double.parse(json['unit_price']),
       totalPrice: double.parse(json['total_price']),
-      status: json['status'],
+      status: OrderItemStatus.fromApi(json['status']),
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );
@@ -51,7 +53,7 @@ class OrderItemModel {
       'quantity': quantity,
       'unitPrice': unitPrice,
       'totalPrice': totalPrice,
-      'status': status,
+      'status': status.value,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/user_model.dart';
 import '../../services/admin_service.dart';
+import '../../widgets/admin/admin_appbars.dart';
+import '../../widgets/admin/error_screen.dart';
+import '../../widgets/admin/loading_screen.dart';
+import '../../widgets/admin/user_expansion_tile.dart';
 
 class AdminCustomersScreen extends StatefulWidget {
   const new({super.key});
@@ -53,81 +58,57 @@ class _AdminCustomersScreenState extends State<AdminCustomersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(), body: _buildBody());
+    return Scaffold(
+      appBar: adminScreensAppBar(context: context, title: 'Müşteriler'),
+      body: _buildBody(),
+    );
   }
 
   Widget _buildBody() {
     if (_isLoading == true) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingScreen();
     }
 
     if (_errorMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            ElevatedButton(
-              onPressed: _getCustomers,
-              child: const Text('Yeniden dene'),
-            ),
-          ],
-        ),
+      return ErrorScreen(
+        errorMessage: _errorMessage!,
+        onPressed: _getCustomers,
       );
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-      itemCount: _customers.length,
-      itemBuilder: (context, index) {
-        UserModel customer = _customers[index];
-        return ExpansionTile(
-          title: Text('${customer.firstName} ${customer.lastName}'),
-          subtitle: Text(customer.email),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('ID', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(customer.id),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Telefon',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  customer.phone != null ? customer.phone! : 'Kayıtlı değil',
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Oluşturulma Tarihi',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(customer.createdAt.toString()),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Güncelleme Tarihi',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text(customer.updatedAt.toString()),
-              ],
-            ),
-          ],
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: _getCustomers,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+        itemCount: _customers.length,
+        itemBuilder: (context, index) {
+          UserModel customer = _customers[index];
+
+          final createdAt = DateFormat(
+            'dd MMMM yyyy - HH.mm (UTC)',
+            'tr_TR',
+          ).format(customer.createdAt);
+
+          final updatedAt = DateFormat(
+            'dd MMMM yyyy - HH.mm (UTC)',
+            'tr_TR',
+          ).format(customer.updatedAt);
+
+          return UserExpansionTile(
+            title: '${customer.firstName} ${customer.lastName}',
+            subtitle: customer.email,
+            rowList: [
+              (rowTitle: 'ID', rowValue: customer.id),
+              (
+                rowTitle: 'Telefon',
+                rowValue: customer.phone ?? 'Kayıtlı değil',
+              ),
+              (rowTitle: 'Kayıt Tarihi', rowValue: createdAt),
+              (rowTitle: 'Güncellenme Tarihi', rowValue: updatedAt),
+            ],
+          );
+        },
+      ),
     );
   }
 }

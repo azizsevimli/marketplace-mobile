@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../models/vendor_model.dart';
+import '../../models/vendor_status.dart';
 import '../../services/admin_service.dart';
+import '../../widgets/admin/admin_appbars.dart';
+import '../../widgets/admin/error_screen.dart';
+import '../../widgets/admin/loading_screen.dart';
+import '../../widgets/admin/status_dropdown.dart';
+import '../../widgets/admin/vendor_detail_card.dart';
 
 class VendorDetailScreen extends StatefulWidget {
   final String id;
@@ -18,12 +24,12 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
   final TextEditingController textController = TextEditingController();
 
   late VendorModel _vendor;
-  late String _status;
+  late VendorStatus _status;
   String? _errorMessage;
   bool _isLoading = false;
   bool _isUpdating = false;
 
-  Future<void> getVendorDetail() async {
+  Future<void> _getVendorDetail() async {
     try {
       setState(() {
         _errorMessage = null;
@@ -60,21 +66,21 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
   Future<void> updateVendorStatus() async {
     try {
       setState(() {
-        _isUpdating = false;
+        _isUpdating = true;
       });
 
-      late String message;
+      String message = '';
 
-      if (textController.text.trim() == '') {
+      if (_status != VendorStatus.rejected) {
         message = await AdminService.updateVendorStatus(
           vendorId,
-          _status,
+          _status.value,
           null,
         );
       } else {
         message = await AdminService.updateVendorStatus(
           vendorId,
-          _status,
+          _status.value,
           textController.text.trim(),
         );
       }
@@ -100,35 +106,32 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
   @override
   void initState() {
     super.initState();
-    getVendorDetail();
+    _getVendorDetail();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    textController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Satıcı Detay')),
+      appBar: adminScreensAppBar(context: context, title: 'Satıcı Detay'),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
     if (_isLoading == true) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingScreen();
     }
 
     if (_errorMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            ElevatedButton(
-              onPressed: getVendorDetail,
-              child: const Text('Yeniden dene'),
-            ),
-          ],
-        ),
+      return ErrorScreen(
+        errorMessage: _errorMessage!,
+        onPressed: _getVendorDetail,
       );
     }
 
@@ -138,71 +141,29 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
         mainAxisAlignment: MainAxisAlignment.start,
         spacing: 16.0,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 16.0,
-                children: [
-                  Text('ID'),
-                  Text('İsim'),
-                  Text('Soyisim'),
-                  Text('E-posta'),
-                  Text('Telefon'),
-                  Text('Kayıt Tarihi'),
-                  Text('Güncelleme Tarihi'),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 16.0,
-                children: [
-                  Text(': ${_vendor.id}'),
-                  Text(': ${_vendor.firstName}'),
-                  Text(': ${_vendor.lastName}'),
-                  Text(': ${_vendor.email}'),
-                  Text(
-                    _vendor.phone != null
-                        ? ': ${_vendor.phone!}'
-                        : ': Kayıtlı değil',
-                  ),
-                  Text(': ${_vendor.createdAt.toIso8601String()}'),
-                  Text(': ${_vendor.updatedAt.toIso8601String()}'),
-                ],
-              ),
-            ],
+          VendorDetailCard(vendor: _vendor),
+          StatusDropdown(
+            onSelected: (value) => setState(() {
+              _status = value!;
+            }),
+            selectedStatus: _status,
+            statusList: VendorStatus.entries,
           ),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text('Durum'),
-              DropdownMenu<String>(
-                initialSelection: _status,
-                dropdownMenuEntries: [
-                  DropdownMenuEntry(value: 'PENDING', label: 'Bekliyor'),
-                  DropdownMenuEntry(value: 'APPROVED', label: 'Onayla'),
-                  DropdownMenuEntry(value: 'REJECTED', label: 'Ret'),
-                ],
-                onSelected: (value) => setState(() => _status = value!),
-              ),
-            ],
-          ),
-
-          if (_status == 'REJECTED') ...[
+          if (_status == VendorStatus.rejected)
             TextField(
               controller: textController,
               minLines: 2,
               maxLines: 4,
-              decoration: InputDecoration(label: Text('Ret Nedeni')),
+              decoration: const InputDecoration(
+                label: Text('Reddedilme Nedeni'),
+              ),
             ),
-          ],
 
           ElevatedButton(
             onPressed: updateVendorStatus,
-            child: _isUpdating ? CircularProgressIndicator() : Text('Kaydet'),
+            child: _isUpdating
+                ? const CircularProgressIndicator()
+                : const Text('Kaydet'),
           ),
         ],
       ),

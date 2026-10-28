@@ -10,6 +10,6 @@ class VendorDashboardScreen extends StatefulWidget {
 class _VendorDashboardScreenState extends State<VendorDashboardScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: const Center(child: Text('Vendor Dashboard!')));
+    return const Scaffold(body: Center(child: Text('Vendor Dashboard!')));
   }
 }

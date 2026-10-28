@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:marketplace_mobile/widgets/admin/loading_screen.dart';
 
 import '../../models/order_item_model.dart';
 import '../../models/order_model.dart';
 import '../../services/admin_service.dart';
+import '../../widgets/admin/admin_appbars.dart';
+import '../../widgets/admin/error_screen.dart';
+import '../../widgets/admin/order_info_card.dart';
+import '../../widgets/admin/order_part_card.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final OrderModel order;
@@ -17,14 +22,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   late List<OrderItemModel> orderItems;
   Map<String, List<OrderItemModel>> groupedItems = {};
-  String? errorMessage;
-  bool isLoading = false;
+  String? _errorMessage;
+  bool _isLoading = false;
 
-  Future<void> fetchOrderItems() async {
+  Future<void> _fetchOrderItems() async {
     try {
       setState(() {
-        isLoading = true;
-        errorMessage = null;
+        _isLoading = true;
+        _errorMessage = null;
         orderItems = [];
       });
 
@@ -40,19 +45,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         await groupOrderItems(orderItems);
 
         setState(() {
-          isLoading = false;
+          _isLoading = false;
         });
       } else {
         setState(() {
-          errorMessage = data['message'];
-          isLoading = false;
+          _errorMessage = data['message'];
+          _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint(e.toString());
       setState(() {
-        errorMessage = e.toString();
-        isLoading = false;
+        _errorMessage = e.toString();
+        _isLoading = false;
       });
     }
   }
@@ -67,147 +72,52 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   @override
   void initState() {
-    fetchOrderItems();
     super.initState();
+    _fetchOrderItems();
   }
 
   @override
   Widget build(BuildContext context) {
     final entries = groupedItems.entries.toList();
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: false,
-        title: Text(order.id),
-        titleTextStyle: const TextStyle(fontSize: 16.0, color: Colors.black),
-      ),
+      appBar: adminScreensAppBar(context: context, title: order.id, size: 16.0),
       body: _buildBody(entries),
     );
   }
 
   Widget _buildBody(List<MapEntry<String, List<OrderItemModel>>> entries) {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+    if (_isLoading) {
+      return const LoadingScreen();
     }
 
-    if (errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Hata: $errorMessage'),
-            ElevatedButton(
-              onPressed: fetchOrderItems,
-              child: const Text('Yeniden Dene'),
-            ),
-          ],
-        ),
+    if (_errorMessage != null) {
+      return ErrorScreen(
+        errorMessage: _errorMessage!,
+        onPressed: _fetchOrderItems,
       );
     }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
       child: Column(
         spacing: 16.0,
-        children: [_buildOrderDetailCard(), _buildStoreOrders(entries)],
-      ),
-    );
-  }
-
-  Card _buildOrderDetailCard() {
-    return Card(
-      color: Colors.blue.shade100,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'SİPARİŞ BİLGİLERİ',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
-              ),
+        children: [
+          OrderInfoCard(order: order),
+          Expanded(
+            child: ListView.builder(
+              itemCount: entries.length,
+              itemBuilder: (context, index) {
+                final storeId = entries[index].key;
+                final items = entries[index].value;
+                return OrderPartCard(
+                  index: index,
+                  storeId: storeId,
+                  items: items,
+                );
+              },
             ),
-            Text('Sipariş Tarihi: ${order.createdAt}'),
-            Text('Toplam Ücret: ${order.totalPrice}'),
-            Text('Durumu: ${order.status}'),
-            const SizedBox(height: 16.0),
-            const Text(
-              'MÜŞTERİ BİLGİLERİ',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-            Text('ID: ${order.customerId}'),
-            Text('Ad-Soyad: ${order.customerFullName}'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Expanded _buildStoreOrders(
-    List<MapEntry<String, List<OrderItemModel>>> entries,
-  ) {
-    return Expanded(
-      child: ListView.builder(
-        itemCount: entries.length,
-        itemBuilder: (context, index) {
-          final storeId = entries[index].key;
-          final items = entries[index].value;
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SİPARİŞ #${(index + 1).toString()}',
-                    style: const TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  const Text(
-                    'Mağaza Bilgileri',
-                    style: TextStyle(
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text('ID: $storeId'),
-                  const SizedBox(height: 8.0),
-                  const Text(
-                    'Ürünler',
-                    style: TextStyle(
-                      fontSize: 14.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  ...[
-                    for (final item in items)
-                      ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 0.0,
-                        ),
-                        title: Text(item.productTitle),
-                        subtitle: Text(
-                          'Adet: ${item.quantity}    Birim Ücret: ${item.unitPrice} TL',
-                        ),
-                        trailing: Text('${item.totalPrice} TL'),
-                      ),
-                  ],
-                ],
-              ),
-            ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

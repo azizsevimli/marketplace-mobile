@@ -23,32 +23,35 @@ class AppRoute {
   static final GoRouter routes = GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (context, state) => SplashScreen()),
-      GoRoute(path: '/login', builder: (context, state) => LoginScreen()),
-      GoRoute(path: '/register', builder: (context, state) => RegisterScreen()),
+      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
       GoRoute(
         path: '/vendor/dashboard',
-        builder: (context, state) => VendorDashboardScreen(),
+        builder: (context, state) => const VendorDashboardScreen(),
       ),
       GoRoute(
         path: '/admin/dashboard',
-        builder: (context, state) => AdminDashboardScreen(),
+        builder: (context, state) => const AdminDashboardScreen(),
       ),
       GoRoute(
         path: '/admin/users',
-        builder: (context, state) => AdminUsersScreen(),
+        builder: (context, state) => const AdminUsersScreen(),
       ),
       GoRoute(
         path: '/admin/users/admins',
-        builder: (context, state) => AdminAdminsScreen(),
+        builder: (context, state) => const AdminAdminsScreen(),
       ),
       GoRoute(
         path: '/admin/users/customers',
-        builder: (context, state) => AdminCustomersScreen(),
+        builder: (context, state) => const AdminCustomersScreen(),
       ),
       GoRoute(
         path: '/admin/users/vendors',
-        builder: (context, state) => AdminVendorsScreen(),
+        builder: (context, state) => const AdminVendorsScreen(),
       ),
       GoRoute(
         path: '/admin/users/vendors/:id',
@@ -59,19 +62,19 @@ class AppRoute {
       ),
       GoRoute(
         path: '/admin/users/admins/new',
-        builder: (context, state) => NewAdminScreen(),
+        builder: (context, state) => const NewAdminScreen(),
       ),
       GoRoute(
         path: '/admin/categories',
-        builder: (context, state) => AdminCategoriesScreen(),
+        builder: (context, state) => const AdminCategoriesScreen(),
       ),
       GoRoute(
         path: '/admin/stores',
-        builder: (context, state) => AdminStoresScreen(),
+        builder: (context, state) => const AdminStoresScreen(),
       ),
       GoRoute(
         path: '/admin/orders',
-        builder: (context, state) => AdminOrdersScreen(),
+        builder: (context, state) => const AdminOrdersScreen(),
       ),
       GoRoute(
         path: '/admin/orders/:orderId',
@@ -91,7 +94,7 @@ class AppRoute {
           return ProductDetailScreen(productId: id);
         },
       ),
-      GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],
   );
 }

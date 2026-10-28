@@ -1,3 +1,5 @@
+import 'vendor_status.dart';
+
 class VendorModel {
   final String id;
   final String firstName;
@@ -7,7 +9,7 @@ class VendorModel {
   final String role;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final String status;
+  final VendorStatus status;
   final String? rejectedMessage;
 
   VendorModel({
@@ -33,7 +35,7 @@ class VendorModel {
       role: json['role'],
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      status: json['status'],
+      status: VendorStatus.fromApi(json['status']),
       rejectedMessage: json['rejected_message'],
     );
   }
@@ -48,7 +50,7 @@ class VendorModel {
       'role': role,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
-      'status': status,
+      'status': status.value,
       'rejected_message': rejectedMessage,
     };
   }

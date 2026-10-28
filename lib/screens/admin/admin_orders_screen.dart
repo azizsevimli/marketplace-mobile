@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:marketplace_mobile/widgets/admin/error_screen.dart';
 
 import '../../models/order_model.dart';
 import '../../services/admin_service.dart';
+import '../../widgets/admin/admin_appbars.dart';
+import '../../widgets/admin/loading_screen.dart';
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -13,14 +16,14 @@ class AdminOrdersScreen extends StatefulWidget {
 
 class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   late List<OrderModel> orders;
-  String? errorMessage;
-  bool isLoading = false;
+  String? _errorMessage;
+  bool _isLoading = false;
 
-  Future<void> fetchOrders() async {
+  Future<void> _fetchOrders() async {
     try {
       setState(() {
-        isLoading = true;
-        errorMessage = null;
+        _isLoading = true;
+        _errorMessage = null;
         orders = [];
       });
 
@@ -29,55 +32,44 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       if (data['orders'] != null) {
         setState(() {
           orders = data['orders'];
-          isLoading = false;
+          _isLoading = false;
         });
       } else {
         setState(() {
-          errorMessage = data['message'];
-          isLoading = false;
+          _errorMessage = data['message'];
+          _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint(e.toString());
       setState(() {
-        errorMessage = e.toString();
-        isLoading = false;
+        _errorMessage = e.toString();
+        _isLoading = false;
       });
     }
   }
 
   @override
   void initState() {
-    fetchOrders();
+    _fetchOrders();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Siparişler')),
+      appBar: adminScreensAppBar(context: context, title: 'Siparişler'),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+    if (_isLoading) {
+      return const LoadingScreen();
     }
 
-    if (errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Hata: $errorMessage'),
-            ElevatedButton(
-              onPressed: fetchOrders,
-              child: const Text('Yeniden Dene'),
-            ),
-          ],
-        ),
-      );
+    if (_errorMessage != null) {
+      return ErrorScreen(errorMessage: _errorMessage!, onPressed: _fetchOrders);
     }
 
     if (orders.isEmpty) {
@@ -85,7 +77,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     }
 
     return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
       itemCount: orders.length,
       itemBuilder: (context, index) {
         final OrderModel order = orders[index];

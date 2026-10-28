@@ -5,6 +5,10 @@ import 'package:provider/provider.dart';
 
 import '../../core/providers/admin_product_provider.dart';
 import '../../models/product_status.dart';
+import '../../widgets/admin/admin_appbars.dart';
+import '../../widgets/admin/error_screen.dart';
+import '../../widgets/admin/loading_screen.dart';
+import '../../widgets/admin/products_segmented_button.dart';
 
 class AdminProductsScreen extends StatefulWidget {
   const AdminProductsScreen({super.key});
@@ -22,6 +26,13 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
     context.read<AdminProductProvider>().fetchProducts(selectedStatus);
   }
 
+  void handleSelectionChanged(Set<ProductStatus> newSelection) {
+    setState(() {
+      selectedStatus = newSelection.first;
+    });
+    context.read<AdminProductProvider>().fetchProducts(selectedStatus);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -33,7 +44,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ürünler')),
+      appBar: adminScreensAppBar(context: context, title: 'Ürünler'),
       body: _buildBody(),
     );
   }
@@ -46,7 +57,10 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: _buildSegmentedButton(),
+            child: ProductsSegmentedButton(
+              selectedStatus: selectedStatus,
+              onSelectionChanged: handleSelectionChanged,
+            ),
           ),
           Expanded(
             child: Consumer<AdminProductProvider>(
@@ -60,21 +74,13 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
 
   Widget _buildBodyList(AdminProductProvider provider) {
     if (provider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingScreen();
     }
 
     if (provider.errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Hata: ${provider.errorMessage}'),
-            ElevatedButton(
-              onPressed: () => provider.fetchProducts(selectedStatus),
-              child: const Text('Yeniden Dene'),
-            ),
-          ],
-        ),
+      return ErrorScreen(
+        errorMessage: provider.errorMessage!,
+        onPressed: () => provider.fetchProducts(selectedStatus),
       );
     }
 
@@ -90,29 +96,13 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
           'dd MMMM yyyy - HH.mm (UTC)',
           'tr_TR',
         ).format(product.createdAt);
+
         return ListTile(
           title: Text(product.title),
           subtitle: Text('Kayıt Tarihi: $date'),
           trailing: const Icon(Icons.arrow_forward_ios),
           onTap: () => _openDetail(product.id),
         );
-      },
-    );
-  }
-
-  Widget _buildSegmentedButton() {
-    return SegmentedButton(
-      showSelectedIcon: false,
-      segments: [
-        for (final status in ProductStatus.values)
-          ButtonSegment(value: status, label: Text(status.label)),
-      ],
-      selected: <ProductStatus>{selectedStatus},
-      onSelectionChanged: (Set<ProductStatus> newSelection) {
-        setState(() {
-          selectedStatus = newSelection.first;
-        });
-        context.read<AdminProductProvider>().fetchProducts(selectedStatus);
       },
     );
   }

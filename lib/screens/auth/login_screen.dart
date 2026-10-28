@@ -79,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Hesabınız yok mu?"),
+                const Text("Hesabınız yok mu?"),
                 TextButton(
                   onPressed: () {
                     context.go('/register');
@@ -103,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           DropdownMenu<String>(
             initialSelection: selectedRole,
-            dropdownMenuEntries: [
+            dropdownMenuEntries: const [
               DropdownMenuEntry(value: 'CUSTOMER', label: 'Customer'),
               DropdownMenuEntry(value: 'VENDOR', label: 'Vendor'),
               DropdownMenuEntry(value: 'ADMIN', label: 'Admin'),

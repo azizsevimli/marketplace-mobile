@@ -1,10 +1,12 @@
+import 'order_status.dart';
+
 class OrderModel {
   final String id;
   final String customerId;
   final String customerFullName;
   final String shippingAddress;
   final double totalPrice;
-  final String status;
+  final OrderStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -26,7 +28,7 @@ class OrderModel {
       customerFullName: json['customer_full_name'],
       shippingAddress: json['shipping_address'],
       totalPrice: double.parse(json['total_price']),
-      status: json['status'],
+      status: OrderStatus.fromApi(json['status']),
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );
@@ -39,7 +41,7 @@ class OrderModel {
       'customerFullName': customerFullName,
       'shippingAddress': shippingAddress,
       'totalPrice': totalPrice,
-      'status': status,
+      'status': status.value,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
