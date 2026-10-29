@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/providers/admin_users_provider.dart';
 import '../../models/vendor_model.dart';
 import '../../models/vendor_status.dart';
-import '../../services/admin_service.dart';
+// import '../../services/admin_service.dart';
 import '../../widgets/admin/admin_appbars.dart';
 import '../../widgets/admin/error_screen.dart';
 import '../../widgets/admin/loading_screen.dart';
@@ -16,45 +18,12 @@ class AdminVendorsScreen extends StatefulWidget {
 }
 
 class _AdminVendorsScreenState extends State<AdminVendorsScreen> {
-  late List<VendorModel> _vendors;
-  String? _errorMessage;
-  bool _isLoading = false;
-
-  // TODO(001): Provider'a çevirilecek kaydetme ile beraber.
-  Future<void> _getVendors() async {
-    try {
-      setState(() {
-        _errorMessage = null;
-        _isLoading = true;
-      });
-
-      final data = await AdminService.getVendors();
-
-      if (data['vendors'] == null) {
-        setState(() {
-          _errorMessage = data['message'];
-          _isLoading = false;
-        });
-        return;
-      }
-
-      setState(() {
-        _vendors = data['vendors'];
-        _errorMessage = null;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = e.toString();
-      });
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    _getVendors();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AdminUsersProvider>().fetchVendors();
+    });
   }
 
   @override
@@ -66,30 +35,40 @@ class _AdminVendorsScreenState extends State<AdminVendorsScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading == true) {
-      return const LoadingScreen();
-    }
+    return Consumer<AdminUsersProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const LoadingScreen();
+        }
 
-    if (_errorMessage != null) {
-      return ErrorScreen(errorMessage: _errorMessage!, onPressed: _getVendors);
-    }
-
-    return RefreshIndicator(
-      onRefresh: _getVendors,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-        itemCount: _vendors.length,
-        itemBuilder: (context, index) {
-          VendorModel vendor = _vendors[index];
-          return ListTile(
-            leading: _buildLeading(vendor.status),
-            title: Text('${vendor.firstName} ${vendor.lastName}'),
-            subtitle: Text(vendor.email),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            onTap: () => context.push('/admin/users/vendors/${vendor.id}'),
+        if (provider.errorMessage != null) {
+          return ErrorScreen(
+            errorMessage: provider.errorMessage!,
+            onPressed: provider.fetchVendors,
           );
-        },
-      ),
+        }
+
+        return RefreshIndicator(
+          onRefresh: provider.fetchVendors,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8.0,
+              vertical: 16.0,
+            ),
+            itemCount: provider.vendors.length,
+            itemBuilder: (context, index) {
+              VendorModel vendor = provider.vendors[index];
+              return ListTile(
+                leading: _buildLeading(vendor.status),
+                title: Text('${vendor.firstName} ${vendor.lastName}'),
+                subtitle: Text(vendor.email),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () => context.push('/admin/users/vendors/${vendor.id}'),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

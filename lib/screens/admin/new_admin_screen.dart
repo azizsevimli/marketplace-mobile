@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/providers/admin_users_provider.dart';
 import '../../core/utils/validations.dart';
-import '../../services/admin_service.dart';
 import '../../widgets/admin/admin_appbars.dart';
 
 class NewAdminScreen extends StatefulWidget {
@@ -20,51 +21,50 @@ class _NewAdminScreenState extends State<NewAdminScreen> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  String? _errorMessage;
-  bool _isLoading = false;
+  Future<void> handleRegister(AdminUsersProvider provider) async {
+    final data = createData();
 
-  Future<void> register() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      final result = await AdminService.register(
-        firstName: nameController.text.trim(),
-        lastName: surnameController.text.trim(),
-        email: emailController.text.trim(),
-        phone: phoneController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+    if (data != null) {
+      final result = await provider.registerAdmin(data);
 
       if (!mounted) return;
 
-      if (result['userId'] != null) {
+      if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${result['message']} ${result['userId']}')),
+          const SnackBar(content: Text('Yeni admin oluşturuldu.')),
         );
-        setState(() => _isLoading = false);
         context.pop();
       } else {
-        setState(() {
-          _errorMessage = result['message'];
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(_errorMessage!)));
+        if (provider.errorMessage != null) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(provider.errorMessage!)));
+        }
       }
+    }
+  }
+
+  Map<String, dynamic>? createData() {
+    if (_formKey.currentState!.validate()) {
+      return {
+        'firstName': nameController.text.trim(),
+        'lastName': surnameController.text.trim(),
+        'email': emailController.text.trim(),
+        'phone': phoneController.text.trim(),
+        'password': passwordController.text.trim(),
+      };
+    } else {
+      return null;
     }
   }
 
   @override
   void dispose() {
-    super.dispose();
     nameController.dispose();
     surnameController.dispose();
     emailController.dispose();
     phoneController.dispose();
     passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -122,13 +122,20 @@ class _NewAdminScreenState extends State<NewAdminScreen> {
                 controller: passwordController,
                 keyboardType: TextInputType.visiblePassword,
                 validator: (value) => Validations.validatePassword(value),
-                decoration: const InputDecoration(label: Text('Şifre')),
+                decoration: const InputDecoration(
+                  label: Text('Şifre'),
+                  errorMaxLines: 2,
+                ),
               ),
-              ElevatedButton(
-                onPressed: _isLoading ? null : register,
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Admin Ekle'),
+              Consumer<AdminUsersProvider>(
+                builder: (context, provider, child) => ElevatedButton(
+                  onPressed: provider.isRegistration
+                      ? null
+                      : () => handleRegister(provider),
+                  child: provider.isRegistration
+                      ? const CircularProgressIndicator()
+                      : const Text('Admin Ekle'),
+                ),
               ),
             ],
           ),

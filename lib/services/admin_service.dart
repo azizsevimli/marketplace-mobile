@@ -228,7 +228,7 @@ class AdminService() {
     }
   }
 
-  static Future<String> updateVendorStatus(
+  static Future<Map<String, dynamic>> updateVendorStatus(
     String id,
     String status,
     String? rejectedMessage,
@@ -242,21 +242,30 @@ class AdminService() {
           options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
 
-        if (response.data['success'] != true) {
-          return response.data['message'];
-        }
+        // if (response.data['success'] != true) {
+        //   return {
+        //     'success': response.data['success'],
+        //     'message': response.data['message'],
+        //   };
+        // }
 
-        return response.data['message'];
+        return {
+          'success': response.data['success'],
+          'message': response.data['message'],
+        };
       } else {
         await StorageService.deleteToken();
-        return 'Yetkisiz Erişim (Token bulunmuyor)';
+        return {
+          'success': false,
+          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
+        };
       }
     } on DioException catch (e) {
       debugPrint('Message: ${e.message}');
       debugPrint('Error: ${e.error}');
       debugPrint('Hata [Status]: ${e.response?.statusCode}');
       debugPrint('Hata [Body]: ${e.response?.data}');
-      return e.message.toString();
+      return {'success': false, 'message': e.message.toString()};
     }
   }
 
