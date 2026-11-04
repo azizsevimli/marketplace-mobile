@@ -1,14 +1,15 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 
 import '../core/network/dio_client.dart';
 import '../core/storage/secure_storage.dart';
+import '../core/utils/result.dart';
 import '../models/user_model.dart';
 
 class AuthService {
   static final _dio = DioClient.dio;
+  static Options get _auth => Options(extra: {'requiresAuth': true});
 
-  static Future<Map<String, dynamic>?> register(
+  static Future<Result<String>> register(
     String name,
     String surname,
     String email,
@@ -27,36 +28,22 @@ class AuthService {
         },
       );
 
-      if (response.data['success'] != true) {
-        return {
-          'userId': null,
-          'userRole': null,
-          'message': response.data['message'],
-        };
+      if (response.data['success']) {
+        final String userId = response.data['userId'];
+        // final String userRole = response.data['userRole'];
+        final String token = response.data['token'];
+        await StorageService.saveToken(token);
+
+        return Result.ok(userId);
+      } else {
+        return Result.error(Exception('Hatalı sonuç'));
       }
-
-      final message = response.data['message'];
-      final userId = response.data['userId'];
-      final userRole = response.data['userRole'];
-      final token = response.data['token'];
-      await StorageService.saveToken(token);
-
-      return {'userId': userId, 'userRole': userRole, 'message': message};
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Kayıt Hatası [Status]: ${e.response?.statusCode}');
-      debugPrint('Kayıt Hatası [Body]: ${e.response?.data}');
-
-      return {
-        'userId': null,
-        'userRole': null,
-        'message': e.response?.data['message'] ?? 'Kayıt başarısız oldu.',
-      };
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>?> login(
+  static Future<Result<UserModel>> login(
     String email,
     String password,
     String role,
@@ -67,75 +54,44 @@ class AuthService {
         data: {'email': email, 'password': password},
       );
 
-      if (response.data['success'] != true) {
-        return {'user': null, 'message': response.data['message']};
-      }
-
-      final user = UserModel.fromJson(response.data['user']);
-
-      // if (role != user.role) {
-      //   return {
-      //     'user': null,
-      //     'message': 'Lütfen ${user.role} panelinden giriş yapın.',
-      //   };
-      // }
-
-      final token = response.data['token'];
-      await StorageService.saveToken(token);
-
-      return {'user': user, 'message': response.data['message']};
-    } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Giriş Hatası [Status]: ${e.response?.statusCode}');
-      debugPrint('Giriş Hatası [Body]: ${e.response?.data}');
-
-      return {
-        'user': null,
-        'message': e.response?.data['message'] ?? 'Giriş başarısız oldu.',
-      };
-    }
-  }
-
-  static Future<UserModel?> checkUser() async {
-    final token = await StorageService.getToken();
-    if (token != null && token.isNotEmpty) {
-      try {
-        final response = await _dio.get(
-          '/auth/me',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
-
-        if (response.data['success'] != true) {
-          await StorageService.deleteToken();
-          return null;
-        }
+      if (response.data['success']) {
+        final token = response.data['token'];
+        await StorageService.saveToken(token);
 
         final user = UserModel.fromJson(response.data['user']);
 
-        return user;
-      } on DioException catch (e) {
-        debugPrint('Message: ${e.message}');
-        debugPrint('Error: ${e.error}');
-        debugPrint('Hata [Status]: ${e.response?.statusCode}');
-        debugPrint('Hata [Body]: ${e.response?.data}');
-        await StorageService.deleteToken();
-        return null;
+        return Result.ok(user);
+      } else {
+        return Result.error(Exception('Hatalı sonuç'));
       }
-    } else {
-      await StorageService.deleteToken();
-      debugPrint('Token bulunmuyor.');
-      return null;
+    } on DioException catch (e) {
+      return Result.error(e);
     }
   }
 
-  static Future<bool> logout() async {
+  static Future<Result<UserModel>> checkUser() async {
+    try {
+      final response = await _dio.get('/auth/me', options: _auth);
+
+      if (response.data['success']) {
+        final UserModel user = UserModel.fromJson(response.data['user']);
+
+        return Result.ok(user);
+      } else {
+        await StorageService.deleteToken();
+        return Result.error(Exception('Token bulunmuyor veya süresi geçmiş.'));
+      }
+    } on DioException catch (e) {
+      return Result.error(e);
+    }
+  }
+
+  static Future<Result<bool>> logout() async {
     try {
       await StorageService.deleteToken();
-      return true;
-    } catch (e) {
-      debugPrint('Logout Hatası: $e');
-      return false;
+      return Result.ok(true);
+    } on Exception catch (e) {
+      return Result.error(e);
     }
   }
 }

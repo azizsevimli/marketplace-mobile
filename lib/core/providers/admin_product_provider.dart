@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../models/product_model.dart';
 import '../../models/product_status.dart';
 import '../../services/admin_service.dart';
+import '../utils/result.dart';
 
 class AdminProductProvider extends ChangeNotifier {
   List<ProductModel> _products = [];
@@ -25,28 +26,24 @@ class AdminProductProvider extends ChangeNotifier {
     _selectedStatus = status;
   }
 
-  Future<void> fetchProducts(ProductStatus status) async {
+  Future<void> fetchProductsByStatus(ProductStatus status) async {
     _products = [];
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    try {
-      final Map<String, dynamic> data = await AdminService.getProductsByStatus(
-        status.value,
-      );
-      if (data['products'] != null) {
-        _products = data['products'];
-      } else {
-        _errorMessage = data['message'];
-      }
-    } catch (e, s) {
-      debugPrint('$e\n$s');
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+    final Result<List<ProductModel>> result =
+        await AdminService.getProductsByStatus(status.value);
+
+    switch (result) {
+      case Ok<List<ProductModel>>():
+        _products = result.value;
+      case Error<List<ProductModel>>():
+        _errorMessage = result.error.toString();
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> fetchProductDetail(String id) async {
@@ -55,22 +52,18 @@ class AdminProductProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    try {
-      final Map<String, dynamic> data = await AdminService.getProductDetail(id);
+    final Result<ProductModel> result = await AdminService.getProductDetail(id);
 
-      if (data['product'] != null) {
-        _product = data['product'];
+    switch (result) {
+      case Ok<ProductModel>():
+        _product = result.value;
         selectStatus(_product!.status);
-      } else {
-        _errorMessage = data['message'];
-      }
-    } catch (e, s) {
-      debugPrint('$e\n$s');
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      case Error<ProductModel>():
+        _errorMessage = result.error.toString();
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<bool> updateProductStatus(String id, ProductStatus status) async {
@@ -78,26 +71,23 @@ class AdminProductProvider extends ChangeNotifier {
     _updateErrorMessage = null;
     notifyListeners();
 
-    try {
-      final Map<String, dynamic> data = await AdminService.updateProductStatus(
-        id,
-        status.value,
-      );
+    final Result<ProductModel> result = await AdminService.updateProductStatus(
+      id,
+      status.value,
+    );
 
-      if (data['product'] != null) {
-        _product = data['product'];
+    switch (result) {
+      case Ok<ProductModel>():
+        _product = result.value;
+        _isUpdating = false;
+        notifyListeners();
         return true;
-      } else {
-        _updateErrorMessage = data['message'];
+
+      case Error<ProductModel>():
+        _updateErrorMessage = result.error.toString();
+        _isUpdating = false;
+        notifyListeners();
         return false;
-      }
-    } catch (e, s) {
-      debugPrint('$e\n$s');
-      _updateErrorMessage = e.toString();
-      return false;
-    } finally {
-      _isUpdating = false;
-      notifyListeners();
     }
   }
 }

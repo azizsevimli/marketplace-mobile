@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:marketplace_mobile/widgets/admin/error_screen.dart';
 
+import '../../core/utils/result.dart';
 import '../../models/order_model.dart';
 import '../../services/admin_service.dart';
 import '../../widgets/admin/admin_appbars.dart';
@@ -20,32 +21,25 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   bool _isLoading = false;
 
   Future<void> _fetchOrders() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-        orders = [];
-      });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      orders = [];
+    });
 
-      final Map<String, dynamic> data = await AdminService.getOrders();
+    final Result<List<OrderModel>> result = await AdminService.getOrders();
 
-      if (data['orders'] != null) {
+    switch (result) {
+      case Ok<List<OrderModel>>():
         setState(() {
-          orders = data['orders'];
+          orders = result.value;
           _isLoading = false;
         });
-      } else {
+      case Error<List<OrderModel>>():
         setState(() {
-          _errorMessage = data['message'];
+          _errorMessage = result.error.toString();
           _isLoading = false;
         });
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
     }
   }
 

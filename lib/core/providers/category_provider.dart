@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../models/category_model.dart';
 import '../../services/admin_service.dart';
+import '../utils/result.dart';
 
 class CategoryProvider extends ChangeNotifier {
-  // final AdminService _service = AdminService();
-
   List<CategoryModel> _categories = [];
   bool _isLoading = false;
   bool _isCreating = false;
@@ -25,68 +24,84 @@ class CategoryProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    try {
-      final Map<String, dynamic> data =
-          await AdminService.getCategoriesWithSub();
+    final Result<List<CategoryModel>> result =
+        await AdminService.getCategoriesWithSub();
 
-      if (data['categories'] != null) {
-        _categories = data['categories'];
-      } else {
-        _errorMessage = data['message'];
-      }
-    } catch (e) {
-      _errorMessage = e.toString();
-    } finally {
-      _isLoading = false;
-      _isCreating = false;
-      _isEditing = false;
-      _isDeleting = false;
-      notifyListeners();
+    switch (result) {
+      case Ok<List<CategoryModel>>():
+        _categories = result.value;
+      case Error<List<CategoryModel>>():
+        _errorMessage = result.error.toString();
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<bool> createCategory(String title, String slug) async {
     _isCreating = true;
     notifyListeners();
-    try {
-      await AdminService.createCategory(title, slug);
-      await fetchCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _isCreating = false;
-      notifyListeners();
-      return false;
+
+    final Result<bool> result = await AdminService.createCategory(
+      title: title,
+      slug: slug,
+    );
+
+    switch (result) {
+      case Ok<bool>():
+        _isCreating = false;
+        await fetchCategories();
+        notifyListeners();
+        return result.value;
+      case Error<bool>():
+        _isCreating = false;
+        _errorMessage = result.error.toString();
+        notifyListeners();
+        return false;
     }
   }
 
   Future<bool> updateCategory(String id, String title, String slug) async {
     _isEditing = true;
     notifyListeners();
-    try {
-      await AdminService.updateCategory(id, title, slug);
-      await fetchCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _isEditing = false;
-      notifyListeners();
-      return false;
+
+    final Result<bool> result = await AdminService.updateCategory(
+      id: id,
+      title: title,
+      slug: slug,
+    );
+
+    switch (result) {
+      case Ok<bool>():
+        _isEditing = false;
+        await fetchCategories();
+        notifyListeners();
+        return result.value;
+      case Error<bool>():
+        _isEditing = false;
+        _errorMessage = result.error.toString();
+        notifyListeners();
+        return false;
     }
   }
 
   Future<bool> deleteCategory(String id) async {
     _isDeleting = true;
     notifyListeners();
-    try {
-      await AdminService.deleteCategory(id);
-      await fetchCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = 'Kategori silinemedi.';
-      _isDeleting = false;
-      notifyListeners();
-      return false;
+
+    final Result<bool> result = await AdminService.deleteCategory(id);
+
+    switch (result) {
+      case Ok<bool>():
+        _isDeleting = false;
+        await fetchCategories();
+        notifyListeners();
+        return result.value;
+      case Error<bool>():
+        _isDeleting = false;
+        _errorMessage = result.error.toString();
+        notifyListeners();
+        return false;
     }
   }
 
@@ -97,15 +112,24 @@ class CategoryProvider extends ChangeNotifier {
   ) async {
     _isCreating = true;
     notifyListeners();
-    try {
-      await AdminService.createSubcategory(parentId, title, slug);
-      await fetchCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _isCreating = false;
-      notifyListeners();
-      return false;
+
+    final Result<bool> result = await AdminService.createSubcategory(
+      parentId: parentId,
+      title: title,
+      slug: slug,
+    );
+
+    switch (result) {
+      case Ok<bool>():
+        _isCreating = false;
+        await fetchCategories();
+        notifyListeners();
+        return result.value;
+      case Error<bool>():
+        _isCreating = false;
+        _errorMessage = result.error.toString();
+        notifyListeners();
+        return false;
     }
   }
 
@@ -117,30 +141,45 @@ class CategoryProvider extends ChangeNotifier {
   ) async {
     _isEditing = true;
     notifyListeners();
-    try {
-      await AdminService.updateSubcategory(id, parentId, title, slug);
-      await fetchCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _isEditing = false;
-      notifyListeners();
-      return false;
+
+    final Result<bool> result = await AdminService.updateSubcategory(
+      id: id,
+      parentId: parentId,
+      title: title,
+      slug: slug,
+    );
+
+    switch (result) {
+      case Ok<bool>():
+        _isEditing = false;
+        await fetchCategories();
+        notifyListeners();
+        return result.value;
+      case Error<bool>():
+        _isEditing = false;
+        _errorMessage = result.error.toString();
+        notifyListeners();
+        return false;
     }
   }
 
   Future<bool> deleteSubcategory(String id) async {
     _isDeleting = true;
     notifyListeners();
-    try {
-      await AdminService.deleteSubcategory(id);
-      await fetchCategories();
-      return true;
-    } catch (e) {
-      _errorMessage = 'Kategori silinemedi.';
-      _isDeleting = false;
-      notifyListeners();
-      return false;
+
+    final Result<bool> result = await AdminService.deleteSubcategory(id);
+
+    switch (result) {
+      case Ok<bool>():
+        _isDeleting = false;
+        await fetchCategories();
+        notifyListeners();
+        return result.value;
+      case Error<bool>():
+        _isDeleting = false;
+        _errorMessage = result.error.toString();
+        notifyListeners();
+        return false;
     }
   }
 }

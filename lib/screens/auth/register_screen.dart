@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/utils/result.dart';
 import '../../core/utils/validations.dart';
 import '../../services/auth_service.dart';
 
@@ -26,7 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => isLoading = true);
 
-      final result = await AuthService.register(
+      final Result<String> result = await AuthService.register(
         _nameController.text.trim(),
         _surnameController.text.trim(),
         _emailController.text.trim(),
@@ -36,27 +37,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!context.mounted) return;
 
-      if (result?['userId'] != null && result?['userRole'] != null) {
-        final message = result?['message'];
-
-        setState(() => isLoading = false);
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
-
-        if (result?['userRole'] == 'VENDOR') {
-          context.go('/vendor/dashboard');
-        } else {
-          context.go('/home');
-        }
-      } else {
-        final message = result?['message'];
-
-        setState(() => isLoading = false);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message ?? 'Kayıt işlemi başarısız!')),
-        );
+      switch (result) {
+        case Ok<String>():
+          setState(() => isLoading = false);
+          if (selectedRole == 'VENDOR') {
+            context.go('/vendor/dashboard');
+          } else {
+            context.go('/home');
+          }
+        case Error<String>():
+          setState(() => isLoading = false);
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(result.error.toString())));
       }
     }
   }

@@ -23,21 +23,23 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
   Future<void> _openDetail(String id) async {
     await context.push('/admin/products/$id');
     if (!mounted) return;
-    context.read<AdminProductProvider>().fetchProducts(selectedStatus);
+    context.read<AdminProductProvider>().fetchProductsByStatus(selectedStatus);
   }
 
   void handleSelectionChanged(Set<ProductStatus> newSelection) {
     setState(() {
       selectedStatus = newSelection.first;
     });
-    context.read<AdminProductProvider>().fetchProducts(selectedStatus);
+    context.read<AdminProductProvider>().fetchProductsByStatus(selectedStatus);
   }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AdminProductProvider>().fetchProducts(selectedStatus);
+      context.read<AdminProductProvider>().fetchProductsByStatus(
+        selectedStatus,
+      );
     });
   }
 
@@ -80,7 +82,7 @@ class _AdminProductsScreenState extends State<AdminProductsScreen> {
     if (provider.errorMessage != null) {
       return ErrorScreen(
         errorMessage: provider.errorMessage!,
-        onPressed: () => provider.fetchProducts(selectedStatus),
+        onPressed: () => provider.fetchProductsByStatus(selectedStatus),
       );
     }
 

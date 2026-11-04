@@ -25,17 +25,22 @@ class _NewAdminScreenState extends State<NewAdminScreen> {
     final data = createData();
 
     if (data != null) {
-      final result = await provider.registerAdmin(data);
+      await provider.registerAdmin(data);
 
       if (!mounted) return;
 
-      if (result) {
+      if (provider.newAdminId != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Yeni admin oluşturuldu.')),
+          SnackBar(
+            content: Text(
+              '${provider.newAdminId} id numarası ile admin oluşturuldu.',
+            ),
+          ),
         );
         context.pop();
       } else {
         if (provider.errorMessage != null) {
+          debugPrint(provider.errorMessage);
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(provider.errorMessage!)));
         }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/utils/result.dart';
+import '../models/user_model.dart';
 import '../services/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -12,26 +14,21 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   Future<void> _checkUserStatus({required BuildContext context}) async {
-    try {
-      final user = await AuthService.checkUser();
+    final Result<UserModel> result = await AuthService.checkUser();
 
-      if (!context.mounted) return;
+    if (!context.mounted) return;
 
-      if (user != null) {
-        if (user.role == 'ADMIN') {
+    switch (result) {
+      case Ok<UserModel>():
+        if (result.value.role == 'ADMIN') {
           context.go('/admin/dashboard');
-        } else if (user.role == 'VENDOR') {
+        } else if (result.value.role == 'VENDOR') {
           context.go('/vendor/dashboard');
         } else {
           context.go('/home');
         }
-      } else {
+      case Error<UserModel>():
         context.go('/login');
-      }
-    } catch (e) {
-      debugPrint('Error checking user status: $e');
-      if (!context.mounted) return;
-      context.go('/login');
     }
   }
 

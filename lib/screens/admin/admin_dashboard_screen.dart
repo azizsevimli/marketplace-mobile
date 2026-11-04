@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/utils/result.dart';
 import '../../models/admin_stats_model.dart';
 import '../../services/admin_service.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/admin/dashboard_card.dart';
 import '../../widgets/admin/error_screen.dart';
 import '../../widgets/admin/loading_screen.dart';
@@ -18,24 +21,45 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   AdminStatsModel? _stats;
   String? _errorMessage;
   bool _isLoading = false;
+  bool _isLogout = false;
 
   Future<void> _getStats() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    final data = await AdminService.getDashboardStats();
+    final Result<AdminStatsModel> result =
+        await AdminService.getDashboardStats();
 
-    if (data['stats'] != null) {
-      setState(() {
-        _stats = data['stats'];
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _errorMessage = data['message'];
-        _isLoading = false;
-      });
+    switch (result) {
+      case Ok<AdminStatsModel>():
+        setState(() {
+          _stats = result.value;
+          _isLoading = false;
+        });
+      case Error<AdminStatsModel>():
+        setState(() {
+          _errorMessage = result.error.toString();
+          _isLoading = false;
+        });
+    }
+  }
+
+  Future<void> _logout() async {
+    setState(() => _isLogout = true);
+
+    final Result<bool> result = await AuthService.logout();
+
+    if (!mounted) return;
+
+    switch (result) {
+      case Ok<bool>():
+        context.go('/');
+        setState(() => _isLogout = false);
+      case Error<bool>():
+        setState(() => _isLogout = false);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(result.error.toString())));
     }
   }
 
@@ -48,7 +72,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Marketplace Admin'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Marketplace Admin'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: _isLogout
+                ? const CircularProgressIndicator()
+                : const Icon(Icons.logout_outlined),
+            onPressed: _isLogout ? null : _logout,
+          ),
+        ],
+      ),
       drawer: AdminMenuDrawer(),
       body: _buildBody(),
     );

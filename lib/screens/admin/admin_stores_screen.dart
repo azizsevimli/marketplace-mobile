@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace_mobile/widgets/admin/loading_screen.dart';
 
+import '../../core/utils/result.dart';
 import '../../models/store_model.dart';
 import '../../services/admin_service.dart';
 import '../../widgets/admin/admin_appbars.dart';
@@ -20,30 +21,24 @@ class _AdminStoresScreenState extends State<AdminStoresScreen> {
   bool _isLoading = false;
 
   Future<void> _fetchStores() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-      Map<String, dynamic> data = await AdminService.getStores();
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-      if (data['stores'] != null) {
+    final Result<List<StoreModel>> result = await AdminService.getStores();
+
+    switch (result) {
+      case Ok<List<StoreModel>>():
         setState(() {
-          _stores = data['stores'] as List<StoreModel>;
+          _stores = result.value;
           _isLoading = false;
         });
-      } else {
+      case Error<List<StoreModel>>():
         setState(() {
-          _errorMessage = data['message'];
+          _errorMessage = result.error.toString();
           _isLoading = false;
         });
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
     }
   }
 

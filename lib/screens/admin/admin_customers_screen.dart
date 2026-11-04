@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/utils/result.dart';
 import '../../models/user_model.dart';
 import '../../services/admin_service.dart';
 import '../../widgets/admin/admin_appbars.dart';
@@ -21,32 +22,24 @@ class _AdminCustomersScreenState extends State<AdminCustomersScreen> {
   bool _isLoading = false;
 
   Future<void> _getCustomers() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-      final data = await AdminService.getCustomers();
+    final Result<List<UserModel>> result = await AdminService.getCustomers();
 
-      if (data['customers'] == null) {
+    switch (result) {
+      case Ok<List<UserModel>>():
         setState(() {
-          _errorMessage = data['message'];
+          _customers = result.value;
           _isLoading = false;
         });
-        return;
-      }
-
-      setState(() {
-        _customers = data['customers'];
-        _errorMessage = null;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = e.toString();
-      });
+      case Error<List<UserModel>>():
+        setState(() {
+          _errorMessage = result.error.toString();
+          _isLoading = false;
+        });
     }
   }
 

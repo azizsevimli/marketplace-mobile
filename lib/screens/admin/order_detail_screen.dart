@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace_mobile/widgets/admin/loading_screen.dart';
 
+import '../../core/utils/result.dart';
 import '../../models/order_item_model.dart';
 import '../../models/order_model.dart';
 import '../../services/admin_service.dart';
@@ -20,53 +21,45 @@ class OrderDetailScreen extends StatefulWidget {
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   OrderModel get order => widget.order;
 
-  late List<OrderItemModel> orderItems;
+  late List<OrderItemModel> _orderItems;
   Map<String, List<OrderItemModel>> groupedItems = {};
   String? _errorMessage;
   bool _isLoading = false;
 
-  Future<void> _fetchOrderItems() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-        orderItems = [];
-      });
-
-      Map<String, dynamic> data = await AdminService.getOrderItemsByOrderId(
-        order.id,
-      );
-
-      if (data['orderItems'] != null) {
-        setState(() {
-          orderItems = data['orderItems'];
-        });
-
-        await groupOrderItems(orderItems);
-
-        setState(() {
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = data['message'];
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint(e.toString());
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> groupOrderItems(List<OrderItemModel> list) async {
+  Future<void> _groupOrderItems(List<OrderItemModel> list) async {
     if (list.isNotEmpty) {
       for (final item in list) {
         groupedItems.putIfAbsent(item.storeId, () => []).add(item);
       }
+    }
+  }
+
+  Future<void> _fetchOrderItems() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _orderItems = [];
+    });
+
+    final Result<List<OrderItemModel>> result =
+        await AdminService.getOrderItemsByOrderId(order.id);
+
+    switch (result) {
+      case Ok<List<OrderItemModel>>():
+        setState(() {
+          _orderItems = result.value;
+        });
+
+        await _groupOrderItems(_orderItems);
+
+        setState(() {
+          _isLoading = false;
+        });
+      case Error<List<OrderItemModel>>():
+        setState(() {
+          _errorMessage = result.error.toString();
+          _isLoading = false;
+        });
     }
   }
 

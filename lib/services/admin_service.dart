@@ -1,9 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 
 import '../core/network/dio_client.dart';
-import '../core/storage/secure_storage.dart';
+import '../core/utils/result.dart';
 import '../models/admin_model.dart';
 import '../models/admin_stats_model.dart';
 import '../models/category_model.dart';
@@ -14,10 +12,11 @@ import '../models/store_model.dart';
 import '../models/user_model.dart';
 import '../models/vendor_model.dart';
 
-class AdminService() {
+class AdminService {
   static final _dio = DioClient.dio;
+  static Options get _auth => Options(extra: {'requiresAuth': true});
 
-  static Future<Map<String, dynamic>> register({
+  static Future<Result<String>> register({
     required String firstName,
     required String lastName,
     required String email,
@@ -25,7 +24,6 @@ class AdminService() {
     required String password,
   }) async {
     try {
-      final token = await StorageService.getToken();
       final response = await _dio.post(
         '/admin/users/admins/new',
         data: {
@@ -35,669 +33,400 @@ class AdminService() {
           'phone': phone,
           'password': password,
         },
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        options: _auth,
       );
 
-      final String message = response.data['message'];
+      if (response.data['success']) {
+        final String userId = response.data['userId'];
 
-      if (response.data['success'] != true) {
-        return {'userId': null, 'message': message};
-      }
-
-      final String userId = response.data['userId'];
-
-      return {'userId': userId, 'message': message};
-    } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'userId': null, 'message': e.message};
-    }
-  }
-
-  static Future<Map<String, dynamic>> getDashboardStats() async {
-    try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/dashboard',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
-
-        if (response.data['success'] != true) {
-          return {'stats': null, 'message': response.data['message']};
-        }
-
-        final message = response.data['message'];
-        final stats = AdminStatsModel.fromJson(response.data['stats']);
-
-        return {'stats': stats, 'message': message};
+        return Result.ok(userId);
       } else {
-        await StorageService.deleteToken();
-        return {'stats': null, 'message': 'Yetkisiz erişim (Token bulunmuyor)'};
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'stats': null, 'message': e.message};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getAdmins() async {
+  static Future<Result<AdminStatsModel>> getDashboardStats() async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/users/admins',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
+      final response = await _dio.get('/admin/dashboard', options: _auth);
+      if (response.data['success']) {
+        final AdminStatsModel stats = AdminStatsModel.fromJson(
+          response.data['stats'],
         );
+        return Result.ok(stats);
+      } else {
+        return Result.error(Exception('Hatalı sonuç'));
+      }
+    } on DioException catch (e) {
+      return Result.error(e);
+    }
+  }
 
-        if (response.data['success'] != true) {
-          return {'message': response.data['message'], 'admins': null};
-        }
+  static Future<Result<List<AdminModel>>> getAdmins() async {
+    try {
+      final response = await _dio.get('/admin/users/admins', options: _auth);
 
+      if (response.data['success']) {
         final List responseList = response.data['admins'];
 
-        final List<AdminModel> list = responseList
+        final List<AdminModel> admins = responseList
             .map((i) => AdminModel.fromJson(Map<String, dynamic>.from(i)))
             .toList();
 
-        return {'message': response.data['message'], 'admins': list};
+        return Result.ok(admins);
       } else {
-        await StorageService.deleteToken();
-        return {
-          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
-          'admins': null,
-        };
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.message, 'admins': null};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getCustomers() async {
+  static Future<Result<List<UserModel>>> getCustomers() async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/users/customers',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.get('/admin/users/customers', options: _auth);
 
-        if (response.data['success'] != true) {
-          return {'message': response.data['message'], 'customers': null};
-        }
-
+      if (response.data['success']) {
         final List responseList = response.data['customers'];
 
-        final List<UserModel> list = responseList
+        final List<UserModel> customers = responseList
             .map((i) => UserModel.fromJson(Map<String, dynamic>.from(i)))
             .toList();
 
-        return {'message': response.data['message'], 'customers': list};
+        return Result.ok(customers);
       } else {
-        await StorageService.deleteToken();
-        return {
-          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
-          'customers': null,
-        };
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.message, 'customers': null};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getVendors() async {
+  static Future<Result<List<VendorModel>>> getVendors() async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/users/vendors',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.get('/admin/users/vendors', options: _auth);
 
-        if (response.data['success'] != true) {
-          return {'message': response.data['message'], 'vendors': null};
-        }
-
+      if (response.data['success']) {
         final List responseList = response.data['vendors'];
 
-        final List<VendorModel> list = responseList
+        final List<VendorModel> vendors = responseList
             .map((i) => VendorModel.fromJson(Map<String, dynamic>.from(i)))
             .toList();
 
-        return {'message': response.data['message'], 'vendors': list};
+        return Result.ok(vendors);
       } else {
-        await StorageService.deleteToken();
-        return {
-          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
-          'vendors': null,
-        };
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.message, 'vendors': null};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getVendorById(String id) async {
+  static Future<Result<VendorModel>> getVendorById(String id) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/users/vendors/$id',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.get(
+        '/admin/users/vendors/$id',
+        options: _auth,
+      );
 
-        if (response.data['success'] != true) {
-          return {'message': response.data['message'], 'vendor': null};
-        }
-
+      if (response.data['success']) {
         final VendorModel vendor = VendorModel.fromJson(
           response.data['vendor'],
         );
 
-        return {'message': response.data['message'], 'vendor': vendor};
+        return Result.ok(vendor);
       } else {
-        await StorageService.deleteToken();
-        return {
-          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
-          'vendor': null,
-        };
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.message, 'vendor': null};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> updateVendorStatus(
+  static Future<Result<bool>> updateVendorStatus(
     String id,
     String status,
     String? rejectedMessage,
   ) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.post(
-          '/admin/users/vendors/$id',
-          data: {'status': status, 'rejectedMessage': rejectedMessage},
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.post(
+        '/admin/users/vendors/$id',
+        data: {'status': status, 'rejectedMessage': rejectedMessage},
+        options: _auth,
+      );
 
-        // if (response.data['success'] != true) {
-        //   return {
-        //     'success': response.data['success'],
-        //     'message': response.data['message'],
-        //   };
-        // }
-
-        return {
-          'success': response.data['success'],
-          'message': response.data['message'],
-        };
+      if (response.data['success']) {
+        return Result.ok(true);
       } else {
-        await StorageService.deleteToken();
-        return {
-          'success': false,
-          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
-        };
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'success': false, 'message': e.message.toString()};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getCategoriesWithSub() async {
+  static Future<Result<List<CategoryModel>>> getCategoriesWithSub() async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/categories',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.get('/admin/categories', options: _auth);
 
-        if (response.data['success'] != true) {
-          return {'message': response.data['message'], 'categories': null};
-        }
-
-        final List<dynamic> responseList =
-            response.data['categories'] as List<dynamic>;
+      if (response.data['success']) {
+        final List<dynamic> responseList = response.data['categories'];
 
         final List<CategoryModel> categories = responseList
             .map((i) => CategoryModel.fromJson(i as Map<String, dynamic>))
             .toList();
 
-        return {'message': response.data['message'], 'categories': categories};
+        return Result.ok(categories);
       } else {
-        await StorageService.deleteToken();
-        return {
-          'message': 'Yetkisiz Erişim (Token bulunmuyor)',
-          'categories': null,
-        };
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.message, 'categories': null};
+      return Result.error(e);
     }
   }
 
-  static Future<String> createCategory(String title, String slug) async {
+  static Future<Result<bool>> createCategory({
+    required String title,
+    required String slug,
+  }) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.post(
-          '/category',
-          data: {'title': title, 'slug': slug},
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.post(
+        '/category',
+        data: {'title': title, 'slug': slug},
+        options: _auth,
+      );
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        return response.data['message'];
+      if (response.data['success']) {
+        return Result.ok(true);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return e.message.toString();
+      return Result.error(e);
     }
   }
 
-  static Future<String> updateCategory(
-    String id,
-    String title,
-    String slug,
-  ) async {
+  static Future<Result<bool>> updateCategory({
+    required String id,
+    required String title,
+    required String slug,
+  }) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.patch(
-          '/category/$id',
-          data: {'title': title, 'slug': slug},
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.patch(
+        '/category/$id',
+        data: {'title': title, 'slug': slug},
+        options: _auth,
+      );
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        return response.data['message'];
+      if (response.data['success']) {
+        return Result.ok(true);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return e.message.toString();
+      return Result.error(e);
     }
   }
 
-  static Future<String> deleteCategory(String id) async {
+  static Future<Result<bool>> deleteCategory(String id) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.delete(
-          '/category/$id',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.delete('/category/$id', options: _auth);
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        return response.data['message'];
+      if (response.data['success']) {
+        return Result.ok(true);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return e.message.toString();
+      return Result.error(e);
     }
   }
 
-  static Future<String> createSubcategory(
-    String parentId,
-    String title,
-    String slug,
-  ) async {
+  static Future<Result<bool>> createSubcategory({
+    required String parentId,
+    required String title,
+    required String slug,
+  }) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.post(
-          '/subcategory',
-          data: {'parentId': parentId, 'title': title, 'slug': slug},
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.post(
+        '/subcategory',
+        data: {'parentId': parentId, 'title': title, 'slug': slug},
+        options: _auth,
+      );
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        return response.data['message'];
+      if (response.data['success']) {
+        return Result.ok(true);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return e.message.toString();
+      return Result.error(e);
     }
   }
 
-  static Future<String> updateSubcategory(
-    String id,
-    String parentId,
-    String title,
-    String slug,
-  ) async {
+  static Future<Result<bool>> updateSubcategory({
+    required String id,
+    required String parentId,
+    required String title,
+    required String slug,
+  }) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.patch(
-          '/subcategory/$id',
-          data: {'parentId': parentId, 'title': title, 'slug': slug},
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.patch(
+        '/subcategory/$id',
+        data: {'parentId': parentId, 'title': title, 'slug': slug},
+        options: _auth,
+      );
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        return response.data['message'];
+      if (response.data['success']) {
+        return Result.ok(true);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return e.message.toString();
+      return Result.error(e);
     }
   }
 
-  static Future<String> deleteSubcategory(String id) async {
+  static Future<Result<bool>> deleteSubcategory(String id) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.delete(
-          '/subcategory/$id',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.delete('/subcategory/$id', options: _auth);
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        return response.data['message'];
+      if (response.data['success']) {
+        return Result.ok(true);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return e.message.toString();
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getStores() async {
+  static Future<Result<List<StoreModel>>> getStores() async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/stores',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.get('/admin/stores', options: _auth);
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        final List<dynamic> responseList =
-            response.data['result'] as List<dynamic>;
+      if (response.data['success']) {
+        final List<dynamic> responseList = response.data['result'];
 
         final List<StoreModel> stores = responseList
             .map((i) => StoreModel.fromJson(i as Map<String, dynamic>))
             .toList();
 
-        return {'message': response.data['message'], 'stores': stores};
+        return Result.ok(stores);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.message.toString(), 'stores': null};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getOrders() async {
+  static Future<Result<List<OrderModel>>> getOrders() async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/orders',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.get('/admin/orders', options: _auth);
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        final List<dynamic> responseList =
-            response.data['result'] as List<dynamic>;
+      if (response.data['success']) {
+        final List<dynamic> responseList = response.data['result'];
 
         final List<OrderModel> orders = responseList
             .map((i) => OrderModel.fromJson(i as Map<String, dynamic>))
             .toList();
-
-        return {'message': response.data['message'], 'orders': orders};
+        return Result.ok(orders);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.message.toString(), 'orders': null};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getOrderItemsByOrderId(String id) async {
+  static Future<Result<List<OrderItemModel>>> getOrderItemsByOrderId(
+    String id,
+  ) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/order-items/$id',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
+      final response = await _dio.get('/admin/order-items/$id', options: _auth);
 
-        if (response.data['success'] != true) {
-          throw response.data['message'];
-          // return response.data['message'];
-        }
-
-        final List<dynamic> responseList =
-            response.data['result'] as List<dynamic>;
+      if (response.data['success']) {
+        final List<dynamic> responseList = response.data['result'];
 
         final List<OrderItemModel> orderItems = responseList
             .map((i) => OrderItemModel.fromJson(i as Map<String, dynamic>))
             .toList();
-
-        return {'message': response.data['message'], 'orderItems': orderItems};
+        return Result.ok(orderItems);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.message.toString(), 'orderItems': null};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getProductsByStatus(String status) async {
+  static Future<Result<List<ProductModel>>> getProductsByStatus(
+    String status,
+  ) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/products?status=$status',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
+      final response = await _dio.get(
+        '/admin/products?status=$status',
+        options: _auth,
+      );
+
+      if (response.data['success']) {
+        final List<dynamic> responseList = response.data['result'];
+
+        final List<ProductModel> products = responseList
+            .map((i) => ProductModel.fromJson(i as Map<String, dynamic>))
+            .toList();
+        return Result.ok(products);
+      } else {
+        return Result.error(Exception('Hatalı sonuç'));
+      }
+    } on DioException catch (e) {
+      return Result.error(e);
+    }
+  }
+
+  static Future<Result<ProductModel>> getProductDetail(String id) async {
+    try {
+      final response = await _dio.get('/admin/products/$id', options: _auth);
+
+      if (response.data['success']) {
+        final ProductModel product = ProductModel.fromJson(
+          response.data['result'],
         );
 
-        // if (response.data['success'] != true) {
-        //   throw response.data['message'];
-        //   // return response.data['message'];
-        // }
-
-        final List<dynamic> responseList =
-            response.data['result'] as List<dynamic>;
-
-        if (responseList.isNotEmpty) {
-          final List<ProductModel> products = responseList
-              .map((i) => ProductModel.fromJson(i as Map<String, dynamic>))
-              .toList();
-
-          return {'message': response.data['message'], 'products': products};
-        } else {
-          return {'message': 'Ürün bulunmuyor.', 'products': <ProductModel>[]};
-        }
+        return Result.ok(product);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.response?.data['message'], 'products': null};
+      return Result.error(e);
     }
   }
 
-  static Future<Map<String, dynamic>> getProductDetail(String id) async {
-    try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.get(
-          '/admin/products/$id',
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
-        );
-
-        if (response.data['result'] != null) {
-          final ProductModel product = ProductModel.fromJson(
-            response.data['result'],
-          );
-
-          return {'message': response.data['message'], 'product': product};
-        } else {
-          return {'message': 'Ürün bulunmuyor.', 'product': null};
-        }
-      } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
-      }
-    } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.response?.data['message'], 'product': null};
-    }
-  }
-
-  static Future<Map<String, dynamic>> updateProductStatus(
+  static Future<Result<ProductModel>> updateProductStatus(
     String id,
     String status,
   ) async {
     try {
-      final token = await StorageService.getToken();
-      if (token != null && token.isNotEmpty) {
-        final response = await _dio.patch(
-          '/admin/products/$id',
-          data: {'status': status},
-          options: Options(headers: {'Authorization': 'Bearer $token'}),
+      final response = await _dio.patch(
+        '/admin/products/$id',
+        data: {'status': status},
+        options: _auth,
+      );
+
+      if (response.data['success']) {
+        final ProductModel product = ProductModel.fromJson(
+          response.data['result'],
         );
 
-        if (response.data['result'] != null) {
-          final ProductModel product = ProductModel.fromJson(
-            response.data['result'],
-          );
-
-          return {'message': response.data['message'], 'product': product};
-        } else {
-          return {'message': 'Ürün bulunmuyor.', 'product': null};
-        }
+        return Result.ok(product);
       } else {
-        await StorageService.deleteToken();
-        throw 'Yetkisiz Erişim (Token bulunmuyor)';
+        return Result.error(Exception('Hatalı sonuç'));
       }
     } on DioException catch (e) {
-      debugPrint('Message: ${e.message}');
-      debugPrint('Error: ${e.error}');
-      debugPrint('Hata [Status]: ${e.response?.statusCode}');
-      debugPrint('Hata [Body]: ${e.response?.data}');
-      return {'message': e.response?.data['message'], 'product': null};
+      return Result.error(e);
     }
   }
 }
