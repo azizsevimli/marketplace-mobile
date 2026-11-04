@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/utils/result.dart';
 import '../../core/utils/validations.dart';
+import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => isLoggingIn = true);
 
-      final result = await AuthService.login(
+      final Result<UserModel> result = await AuthService.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
         selectedRole,
@@ -32,29 +34,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!context.mounted) return;
 
-      if (result?['user'] != null) {
-        final message = result?['message'];
+      switch (result) {
+        case Ok<UserModel>():
+          setState(() => isLoggingIn = false);
+          if (result.value.role == 'ADMIN') {
+            context.go('/admin/dashboard');
+          } else if (result.value.role == 'VENDOR') {
+            context.go('/vendor/dashboard');
+          } else {
+            context.go('/home');
+          }
+        case Error<UserModel>():
+          setState(() => isLoggingIn = false);
 
-        setState(() => isLoggingIn = false);
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
-
-        if (result?['user'].role == 'ADMIN') {
-          context.go('/admin/dashboard');
-        } else if (result?['user'].role == 'VENDOR') {
-          context.go('/vendor/dashboard');
-        } else {
-          context.go('/home');
-        }
-      } else {
-        final message = result?['message'];
-
-        setState(() => isLoggingIn = false);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message ?? 'Giriş işlemi başarısız!')),
-        );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(result.error.toString())));
       }
     }
   }
@@ -79,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Hesabınız yok mu?"),
+                const Text("Hesabınız yok mu?"),
                 TextButton(
                   onPressed: () {
                     context.go('/register');
@@ -103,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           DropdownMenu<String>(
             initialSelection: selectedRole,
-            dropdownMenuEntries: [
+            dropdownMenuEntries: const [
               DropdownMenuEntry(value: 'CUSTOMER', label: 'Customer'),
               DropdownMenuEntry(value: 'VENDOR', label: 'Vendor'),
               DropdownMenuEntry(value: 'ADMIN', label: 'Admin'),

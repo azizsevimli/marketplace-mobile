@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/utils/result.dart';
 import '../../core/utils/validations.dart';
 import '../../services/auth_service.dart';
 
@@ -26,7 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => isLoading = true);
 
-      final result = await AuthService.register(
+      final Result<String> result = await AuthService.register(
         _nameController.text.trim(),
         _surnameController.text.trim(),
         _emailController.text.trim(),
@@ -36,27 +37,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (!context.mounted) return;
 
-      if (result?['userId'] != null && result?['userRole'] != null) {
-        final message = result?['message'];
-
-        setState(() => isLoading = false);
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
-
-        if (result?['userRole'] == 'VENDOR') {
-          context.go('/vendor/dashboard');
-        } else {
-          context.go('/home');
-        }
-      } else {
-        final message = result?['message'];
-
-        setState(() => isLoading = false);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message ?? 'Kayıt işlemi başarısız!')),
-        );
+      switch (result) {
+        case Ok<String>():
+          setState(() => isLoading = false);
+          if (selectedRole == 'VENDOR') {
+            context.go('/vendor/dashboard');
+          } else {
+            context.go('/home');
+          }
+        case Error<String>():
+          setState(() => isLoading = false);
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(result.error.toString())));
       }
     }
   }
@@ -83,12 +75,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Hesabınız var mı?"),
+                const Text("Hesabınız var mı?"),
                 TextButton(
                   onPressed: () {
                     context.go('/login');
                   },
-                  child: Text("Giriş Yap"),
+                  child: const Text("Giriş Yap"),
                 ),
               ],
             ),
@@ -107,7 +99,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           DropdownMenu<String>(
             initialSelection: selectedRole,
-            dropdownMenuEntries: [
+            dropdownMenuEntries: const [
               DropdownMenuEntry(value: 'CUSTOMER', label: 'Customer'),
               DropdownMenuEntry(value: 'VENDOR', label: 'Vendor'),
             ],
@@ -150,8 +142,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               suffixIcon: IconButton(
                 onPressed: () => setState(() => isVisible = !isVisible),
                 icon: isVisible
-                    ? Icon(Icons.visibility)
-                    : Icon(Icons.visibility_off),
+                    ? const Icon(Icons.visibility)
+                    : const Icon(Icons.visibility_off),
               ),
             ),
           ),

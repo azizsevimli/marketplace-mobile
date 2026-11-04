@@ -5,8 +5,8 @@ class UserModel {
   final String email;
   final String? phone;
   final String role;
-  final String createdAt;
-  final String updatedAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   UserModel({
     required this.id,
@@ -27,8 +27,8 @@ class UserModel {
       email: json['email'],
       phone: json['phone'],
       role: json['role'],
-      createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
 
@@ -40,8 +40,8 @@ class UserModel {
       'email': email,
       'phone': phone,
       'role': role,
-      'created_at': createdAt,
-      'updated_at': updatedAt,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
   }
 }
